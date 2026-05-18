@@ -1,11 +1,10 @@
 import bcrypt from 'bcryptjs'
+import { PrismaLibSql } from '@prisma/adapter-libsql'
+import { PrismaClient } from '@prisma/client'
 
 async function main() {
-  const { PrismaLibSQL } = await import('@prisma/adapter-libsql')
-  const { createClient } = await import('@libsql/client')
-  const { PrismaClient } = await import('@prisma/client')
-  const libsql = createClient({ url: 'file:./prisma/dev.db' })
-  const adapter = new PrismaLibSQL(libsql)
+  // Run from project root: npx tsx prisma/seed.ts
+  const adapter = new PrismaLibSql({ url: 'file:prisma/dev.db' })
   const prisma = new PrismaClient({ adapter } as any)
   console.log('Seeding...')
   await prisma.notification.deleteMany()
@@ -30,11 +29,11 @@ async function main() {
     { name: 'Cao diem chieu', startHour: 17, endHour: 21, multiplier: 1.5 },
     { name: 'Thap diem', startHour: 21, endHour: 6, multiplier: 0.7 },
   ]})
-  const s1 = await prisma.station.create({ data: { name: 'Tram EV Quan 1', address: '123 Nguyen Hue, Q1, TP.HCM', latitude: 10.7769, longitude: 106.7009, status: 'ACTIVE' } })
-  const s2 = await prisma.station.create({ data: { name: 'Tram EV Quan 7', address: '456 Nguyen Van Linh, Q7, TP.HCM', latitude: 10.7285, longitude: 106.7218, openingHours: '00:00-24:00', status: 'ACTIVE' } })
-  const s3 = await prisma.station.create({ data: { name: 'Tram EV Thu Duc', address: '789 Vo Van Ngan, Thu Duc, TP.HCM', latitude: 10.8500, longitude: 106.7717, status: 'ACTIVE' } })
-  const s4 = await prisma.station.create({ data: { name: 'Tram EV Binh Thanh', address: '321 Dien Bien Phu, BT, TP.HCM', latitude: 10.8031, longitude: 106.7143, status: 'ACTIVE' } })
-  const s5 = await prisma.station.create({ data: { name: 'Tram EV Go Vap', address: '654 Nguyen Oanh, GV, TP.HCM', latitude: 10.8380, longitude: 106.6650, status: 'MAINTENANCE' } })
+  const s1 = await prisma.station.create({ data: { name: 'Tram EV Quan 1', address: '123 Nguyen Hue, Q1, TP.HCM', latitude: 10.7769, longitude: 106.7009, status: 'ACTIVE', description: 'Tram trung tam' } })
+  const s2 = await prisma.station.create({ data: { name: 'Tram EV Quan 7', address: '456 Nguyen Van Linh, Q7, TP.HCM', latitude: 10.7285, longitude: 106.7218, openingHours: '00:00-24:00', status: 'ACTIVE', description: 'Tram Phu My Hung' } })
+  const s3 = await prisma.station.create({ data: { name: 'Tram EV Thu Duc', address: '789 Vo Van Ngan, Thu Duc, TP.HCM', latitude: 10.8500, longitude: 106.7717, status: 'ACTIVE', description: 'Tram cong nghe cao' } })
+  const s4 = await prisma.station.create({ data: { name: 'Tram EV Binh Thanh', address: '321 Dien Bien Phu, BT, TP.HCM', latitude: 10.8031, longitude: 106.7143, status: 'ACTIVE', description: 'Tram Binh Thanh' } })
+  const s5 = await prisma.station.create({ data: { name: 'Tram EV Go Vap', address: '654 Nguyen Oanh, GV, TP.HCM', latitude: 10.8380, longitude: 106.6650, status: 'MAINTENANCE', description: 'Dang bao tri' } })
   const slotDefs = [
     { stationId: s1.id, code: 'Q1-01', connectorType: 'AC_TYPE2', powerKw: 22, pricePerKwh: 3500, status: 'AVAILABLE' },
     { stationId: s1.id, code: 'Q1-02', connectorType: 'AC_TYPE2', powerKw: 22, pricePerKwh: 3500, status: 'AVAILABLE' },
@@ -97,7 +96,10 @@ async function main() {
     { userId: cust2.id, title: 'Thanh toan thanh cong', message: 'Hoa don 128,250 VND da thanh toan', type: 'SUCCESS' },
     { userId: tech.id, title: 'Ticket moi', message: 'Co su co moi tai Q1-06', type: 'WARNING' },
   ]})
-  console.log('Seed OK! admin@evcharge.com / 123456')
+  console.log('Seed OK!')
+  console.log('admin@evcharge.com / 123456')
+  console.log('customer@evcharge.com / 123456')
+  console.log('tech@evcharge.com / 123456')
   process.exit(0)
 }
 main().catch(e => { console.error(e); process.exit(1) })
