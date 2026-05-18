@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password      String
+  role          String   @default("CUSTOMER")
+  walletBalance Float    @default(500000)
+  phone         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  reservations       Reservation[]
+  chargingSessions   ChargingSession[]
+  invoices           Invoice[]
+  maintenanceTickets MaintenanceTicket[]
+  notifications      Notification[]
+}
+
+model Station {
+  id           String   @id @default(cuid())
+  name         String
+  address      String
+  latitude     Float
+  longitude    Float
+  openingHours String   @default("06:00-22:00")
+  status       String   @default("ACTIVE")
+  imageUrl     String?
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  chargingSlots ChargingSlot[]
+  reservations  Reservation[]
+}
+
+model ChargingSlot {
+  id            String   @id @default(cuid())
+  stationId     String
+  code          String
+  connectorType String
+  powerKw       Float
+  pricePerKwh   Float
+  status        String   @default("AVAILABLE")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  station            Station             @relation(fields: [stationId], references: [id])
+  reservations       Reservation[]
+  chargingSessions   ChargingSession[]
+  maintenanceTickets MaintenanceTicket[]
+
+  @@unique([stationId, code])
+}
+
+model Tariff {
+  id          String   @id @default(cuid())
+  name        String
+  startHour   Int
+  endHour     Int
+  multiplier  Float    @default(1.0)
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model Reservation {
+  id              String   @id @default(cuid())
+  userId          String
+  stationId       String
+  chargingSlotId  String
+  startTime       DateTime
+  endTime         DateTime
+  status          String   @default("RESERVED")
+  checkInDeadline DateTime
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id])
+  station         Station          @relation(fields: [stationId], references: [id])
+  chargingSlot    ChargingSlot     @relation(fields: [chargingSlotId], references: [id])
+  chargingSession ChargingSession?
+}
+
+model ChargingSession {
+  id             String    @id @default(cuid())
+  userId         String
+  reservationId  String?   @unique
+  chargingSlotId String
+  startTime      DateTime  @default(now())
+  endTime        DateTime?
+  consumedKwh    Float?
+  status         String    @default("ACTIVE")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id])
+  reservation  Reservation? @relation(fields: [reservationId], references: [id])
+  chargingSlot ChargingSlot @relation(fields: [chargingSlotId], references: [id])
+  invoice      Invoice?
+}
+
+model Invoice {
+  id              String   @id @default(cuid())
+  sessionId       String   @unique
+  userId          String
+  amount          Float
+  kwh             Float
+  durationMinutes Int
+  status          String   @default("UNPAID")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  session ChargingSession @relation(fields: [sessionId], references: [id])
+  user    User            @relation(fields: [userId], references: [id])
+  payment Payment?
+}
+
+model Payment {
+  id        String    @id @default(cuid())
+  invoiceId String    @unique
+  method    String    @default("WALLET")
+  amount    Float
+  status    String    @default("PENDING")
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+}
+
+model MaintenanceTicket {
+  id             String    @id @default(cuid())
+  chargingSlotId String
+  technicianId   String?
+  title          String
+  description    String
+  status         String    @default("OPEN")
+  createdAt      DateTime  @default(now())
+  resolvedAt     DateTime?
+  updatedAt      DateTime  @updatedAt
+
+  chargingSlot ChargingSlot @relation(fields: [chargingSlotId], references: [id])
+  technician   User?        @relation(fields: [technicianId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("INFO")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
