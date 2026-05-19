@@ -57,6 +57,10 @@ model Station {
   reviewCount Int    @default(0)
   brand     String?  @default("V-GREEN")
   isPremium Boolean  @default(false)
+  imageUrl  String?
+  thumbnailUrl String?
+  amenities String?  @default("")
+  description String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
