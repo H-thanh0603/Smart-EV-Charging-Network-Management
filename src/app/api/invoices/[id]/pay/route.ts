@@ -1,24 +1,51 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getTokenFromRequest } from '@/lib/auth'
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { verifyToken, getTokenFromRequest } from "@/lib/auth";
+import { validateAndCalculate } from "@/lib/voucher";
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const payload = getTokenFromRequest(req)
-  if (!payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { id } = await params
-  const invoice = await prisma.invoice.findUnique({ where: { id } })
-  if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
-  if (invoice.userId !== payload.userId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  if (invoice.status === 'PAID') return NextResponse.json({ error: 'Already paid' }, { status: 400 })
-  const user = await prisma.user.findUnique({ where: { id: payload.userId } })
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
-  if (user.walletBalance < invoice.amount)
-    return NextResponse.json({ error: 'Insufficient wallet balance', required: invoice.amount, balance: user.walletBalance }, { status: 400 })
-  const [updatedInvoice, payment] = await Promise.all([
-    prisma.invoice.update({ where: { id }, data: { status: 'PAID' } }),
-    prisma.payment.upsert({ where: { invoiceId: id }, create: { invoiceId: id, method: 'WALLET', amount: invoice.amount, status: 'SUCCESS', paidAt: new Date() }, update: { status: 'SUCCESS', paidAt: new Date() } }),
-    prisma.user.update({ where: { id: payload.userId }, data: { walletBalance: { decrement: invoice.amount } } }),
-    prisma.notification.create({ data: { userId: payload.userId, title: 'Thanh toan thanh cong', message: 'Hoa don da duoc thanh toan', type: 'SUCCESS' } })
-  ])
-  return NextResponse.json({ invoice: updatedInvoice, payment })
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  const token = getTokenFromRequest(req);
+  const u = token ? verifyToken(token) : null;
+  if (!u) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { method, voucherCode } = await req.json();
+  const invoice = await prisma.invoice.findUnique({ where: { id: params.id } });
+  if (!invoice || invoice.userId !== u.id) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (invoice.status === "PAID") return NextResponse.json({ error: "Đã thanh toán" }, { status: 400 });
+
+  let finalAmount = invoice.amount;
+  let discount = 0;
+  let appliedVoucher: any = null;
+
+  if (voucherCode) {
+    const result = await validateAndCalculate(voucherCode, u.id, invoice.amount);
+    if (!result.valid) return NextResponse.json({ error: result.error }, { status: 400 });
+    discount = result.discount!;
+    finalAmount = invoice.amount - discount;
+    appliedVoucher = result.voucher;
+  }
+
+  if (method === "wallet") {
+    const wallet = await prisma.wallet.findUnique({ where: { userId: u.id } });
+    if (!wallet || wallet.balance < finalAmount) return NextResponse.json({ error: "Số dư ví không đủ" }, { status: 400 });
+
+    await prisma.$transaction(async (tx: any) => {
+      const newBalance = wallet.balance - finalAmount;
+      await tx.wallet.update({ where: { userId: u.id }, data: { balance: newBalance } });
+      await tx.walletTransaction.create({
+        data: { userId: u.id, type: "PAYMENT", amount: -finalAmount, balance: newBalance, note: `Thanh toán hoá đơn ${invoice.invoiceNo || invoice.id.slice(-6)}` }
+      });
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: { status: "PAID", paidAt: new Date(), paymentMethod: "WALLET", subtotal: invoice.amount, discount, voucherCode: appliedVoucher?.code, amount: finalAmount }
+      });
+      if (appliedVoucher) {
+        await tx.voucher.update({ where: { id: appliedVoucher.id }, data: { usedCount: { increment: 1 } } });
+        await tx.voucherUsage.create({ data: { voucherId: appliedVoucher.id, userId: u.id, invoiceId: invoice.id, discount } });
+      }
+    });
+    return NextResponse.json({ success: true, finalAmount, discount });
+  }
+
+  return NextResponse.json({ error: "Phương thức không hỗ trợ" }, { status: 400 });
 }

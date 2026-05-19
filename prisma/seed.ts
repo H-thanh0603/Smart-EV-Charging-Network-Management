@@ -1,105 +1,112 @@
-import bcrypt from 'bcryptjs'
-import { PrismaLibSql } from '@prisma/adapter-libsql'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from "@prisma/client";
+import { PrismaLibSql } from "@prisma/adapter-libsql";
+import bcrypt from "bcryptjs";
+
+const adapter = new PrismaLibSql({ url: "file:D:/ev-charging/prisma/dev.db" });
+const prisma = new PrismaClient({ adapter } as any);
 
 async function main() {
-  // Run from project root: npx tsx prisma/seed.ts
-  const adapter = new PrismaLibSql({ url: 'file:prisma/dev.db' })
-  const prisma = new PrismaClient({ adapter } as any)
-  console.log('Seeding...')
-  await prisma.notification.deleteMany()
-  await prisma.maintenanceTicket.deleteMany()
-  await prisma.payment.deleteMany()
-  await prisma.invoice.deleteMany()
-  await prisma.chargingSession.deleteMany()
-  await prisma.reservation.deleteMany()
-  await prisma.tariff.deleteMany()
-  await prisma.chargingSlot.deleteMany()
-  await prisma.station.deleteMany()
-  await prisma.user.deleteMany()
-  const pw = await bcrypt.hash('123456', 10)
-  const cust = await prisma.user.create({ data: { name: 'Nguyen Van A', email: 'customer@evcharge.com', password: pw, role: 'CUSTOMER', walletBalance: 2000000 } })
-  const tech = await prisma.user.create({ data: { name: 'Tran Ky Thuat', email: 'tech@evcharge.com', password: pw, role: 'TECHNICIAN', walletBalance: 500000 } })
-  const cust2 = await prisma.user.create({ data: { name: 'Le Thi B', email: 'customer2@evcharge.com', password: pw, role: 'CUSTOMER', walletBalance: 1500000 } })
-  await prisma.user.create({ data: { name: 'Admin System', email: 'admin@evcharge.com', password: pw, role: 'ADMIN', walletBalance: 10000000 } })
-  await prisma.user.create({ data: { name: 'Pham Van C', email: 'customer3@evcharge.com', password: pw, role: 'CUSTOMER', walletBalance: 3000000 } })
-  await prisma.tariff.createMany({ data: [
-    { name: 'Cao diem sang', startHour: 6, endHour: 9, multiplier: 1.5 },
-    { name: 'Binh thuong', startHour: 9, endHour: 17, multiplier: 1.0 },
-    { name: 'Cao diem chieu', startHour: 17, endHour: 21, multiplier: 1.5 },
-    { name: 'Thap diem', startHour: 21, endHour: 6, multiplier: 0.7 },
-  ]})
-  const s1 = await prisma.station.create({ data: { name: 'Tram EV Quan 1', address: '123 Nguyen Hue, Q1, TP.HCM', latitude: 10.7769, longitude: 106.7009, status: 'ACTIVE', description: 'Tram trung tam' } })
-  const s2 = await prisma.station.create({ data: { name: 'Tram EV Quan 7', address: '456 Nguyen Van Linh, Q7, TP.HCM', latitude: 10.7285, longitude: 106.7218, openingHours: '00:00-24:00', status: 'ACTIVE', description: 'Tram Phu My Hung' } })
-  const s3 = await prisma.station.create({ data: { name: 'Tram EV Thu Duc', address: '789 Vo Van Ngan, Thu Duc, TP.HCM', latitude: 10.8500, longitude: 106.7717, status: 'ACTIVE', description: 'Tram cong nghe cao' } })
-  const s4 = await prisma.station.create({ data: { name: 'Tram EV Binh Thanh', address: '321 Dien Bien Phu, BT, TP.HCM', latitude: 10.8031, longitude: 106.7143, status: 'ACTIVE', description: 'Tram Binh Thanh' } })
-  const s5 = await prisma.station.create({ data: { name: 'Tram EV Go Vap', address: '654 Nguyen Oanh, GV, TP.HCM', latitude: 10.8380, longitude: 106.6650, status: 'MAINTENANCE', description: 'Dang bao tri' } })
-  const slotDefs = [
-    { stationId: s1.id, code: 'Q1-01', connectorType: 'AC_TYPE2', powerKw: 22, pricePerKwh: 3500, status: 'AVAILABLE' },
-    { stationId: s1.id, code: 'Q1-02', connectorType: 'AC_TYPE2', powerKw: 22, pricePerKwh: 3500, status: 'AVAILABLE' },
-    { stationId: s1.id, code: 'Q1-03', connectorType: 'DC_CCS2', powerKw: 60, pricePerKwh: 4500, status: 'AVAILABLE' },
-    { stationId: s1.id, code: 'Q1-04', connectorType: 'DC_CCS2', powerKw: 120, pricePerKwh: 5500, status: 'OCCUPIED' },
-    { stationId: s1.id, code: 'Q1-05', connectorType: 'DC_CHAdeMO', powerKw: 60, pricePerKwh: 4500, status: 'AVAILABLE' },
-    { stationId: s1.id, code: 'Q1-06', connectorType: 'DC_GB', powerKw: 180, pricePerKwh: 6500, status: 'ERROR' },
-    { stationId: s2.id, code: 'Q7-01', connectorType: 'AC_TYPE2', powerKw: 22, pricePerKwh: 3500, status: 'AVAILABLE' },
-    { stationId: s2.id, code: 'Q7-02', connectorType: 'AC_TYPE2', powerKw: 22, pricePerKwh: 3500, status: 'AVAILABLE' },
-    { stationId: s2.id, code: 'Q7-03', connectorType: 'DC_CCS2', powerKw: 60, pricePerKwh: 4500, status: 'AVAILABLE' },
-    { stationId: s2.id, code: 'Q7-04', connectorType: 'DC_CCS2', powerKw: 60, pricePerKwh: 4500, status: 'AVAILABLE' },
-    { stationId: s2.id, code: 'Q7-05', connectorType: 'DC_CCS2', powerKw: 120, pricePerKwh: 5500, status: 'AVAILABLE' },
-    { stationId: s2.id, code: 'Q7-06', connectorType: 'DC_CCS2', powerKw: 120, pricePerKwh: 5500, status: 'CHARGING' },
-    { stationId: s2.id, code: 'Q7-07', connectorType: 'DC_GB', powerKw: 180, pricePerKwh: 6500, status: 'AVAILABLE' },
-    { stationId: s2.id, code: 'Q7-08', connectorType: 'DC_GB', powerKw: 180, pricePerKwh: 6500, status: 'AVAILABLE' },
-    { stationId: s3.id, code: 'TD-01', connectorType: 'AC_TYPE2', powerKw: 22, pricePerKwh: 3500, status: 'AVAILABLE' },
-    { stationId: s3.id, code: 'TD-02', connectorType: 'AC_TYPE2', powerKw: 22, pricePerKwh: 3500, status: 'AVAILABLE' },
-    { stationId: s3.id, code: 'TD-03', connectorType: 'DC_CCS2', powerKw: 60, pricePerKwh: 4500, status: 'AVAILABLE' },
-    { stationId: s3.id, code: 'TD-04', connectorType: 'DC_CCS2', powerKw: 120, pricePerKwh: 5500, status: 'MAINTENANCE' },
-    { stationId: s3.id, code: 'TD-05', connectorType: 'DC_GB', powerKw: 180, pricePerKwh: 6500, status: 'AVAILABLE' },
-    { stationId: s3.id, code: 'TD-06', connectorType: 'DC_CHAdeMO', powerKw: 60, pricePerKwh: 4500, status: 'AVAILABLE' },
-    { stationId: s4.id, code: 'BT-01', connectorType: 'AC_TYPE2', powerKw: 22, pricePerKwh: 3500, status: 'AVAILABLE' },
-    { stationId: s4.id, code: 'BT-02', connectorType: 'AC_TYPE2', powerKw: 22, pricePerKwh: 3500, status: 'AVAILABLE' },
-    { stationId: s4.id, code: 'BT-03', connectorType: 'DC_CCS2', powerKw: 60, pricePerKwh: 4500, status: 'AVAILABLE' },
-    { stationId: s4.id, code: 'BT-04', connectorType: 'DC_CCS2', powerKw: 120, pricePerKwh: 5500, status: 'AVAILABLE' },
-    { stationId: s4.id, code: 'BT-05', connectorType: 'DC_GB', powerKw: 180, pricePerKwh: 6500, status: 'AVAILABLE' },
-    { stationId: s5.id, code: 'GV-01', connectorType: 'AC_TYPE2', powerKw: 22, pricePerKwh: 3500, status: 'MAINTENANCE' },
-    { stationId: s5.id, code: 'GV-02', connectorType: 'AC_TYPE2', powerKw: 22, pricePerKwh: 3500, status: 'MAINTENANCE' },
-    { stationId: s5.id, code: 'GV-03', connectorType: 'DC_CCS2', powerKw: 60, pricePerKwh: 4500, status: 'MAINTENANCE' },
-    { stationId: s5.id, code: 'GV-04', connectorType: 'DC_GB', powerKw: 120, pricePerKwh: 5500, status: 'MAINTENANCE' },
-  ]
-  const slots: any[] = []
-  for (const sd of slotDefs) slots.push(await prisma.chargingSlot.create({ data: sd }))
-  const now = new Date()
-  const tom = new Date(now); tom.setDate(tom.getDate()+1)
-  const yes = new Date(now); yes.setDate(yes.getDate()-1)
-  const r1s = new Date(tom); r1s.setHours(9,0,0,0)
-  const r1e = new Date(tom); r1e.setHours(11,0,0,0)
-  const r1d = new Date(tom); r1d.setHours(9,15,0,0)
-  await prisma.reservation.create({ data: { userId: cust.id, stationId: s1.id, chargingSlotId: slots[2].id, startTime: r1s, endTime: r1e, checkInDeadline: r1d, status: 'RESERVED' } })
-  const r2s = new Date(yes); r2s.setHours(14,0,0,0)
-  const r2e = new Date(yes); r2e.setHours(16,0,0,0)
-  const r2d = new Date(yes); r2d.setHours(14,15,0,0)
-  const res2 = await prisma.reservation.create({ data: { userId: cust2.id, stationId: s2.id, chargingSlotId: slots[11].id, startTime: r2s, endTime: r2e, checkInDeadline: r2d, status: 'COMPLETED' } })
-  const ss = new Date(yes); ss.setHours(14,5,0,0)
-  const se = new Date(yes); se.setHours(15,45,0,0)
-  const sess1 = await prisma.chargingSession.create({ data: { userId: cust2.id, reservationId: res2.id, chargingSlotId: slots[11].id, startTime: ss, endTime: se, consumedKwh: 28.5, status: 'COMPLETED' } })
-  const inv1 = await prisma.invoice.create({ data: { sessionId: sess1.id, userId: cust2.id, amount: 128250, kwh: 28.5, durationMinutes: 100, status: 'PAID' } })
-  await prisma.payment.create({ data: { invoiceId: inv1.id, method: 'WALLET', amount: 128250, status: 'SUCCESS', paidAt: new Date() } })
-  const r3s = new Date(); r3s.setHours(r3s.getHours()-1)
-  const r3e = new Date(); r3e.setHours(r3e.getHours()+2)
-  const r3d = new Date(); r3d.setMinutes(r3d.getMinutes()+15)
-  const res3 = await prisma.reservation.create({ data: { userId: cust.id, stationId: s2.id, chargingSlotId: slots[5].id, startTime: r3s, endTime: r3e, checkInDeadline: r3d, status: 'CHECKED_IN' } })
-  await prisma.chargingSession.create({ data: { userId: cust.id, reservationId: res3.id, chargingSlotId: slots[5].id, startTime: r3s, status: 'ACTIVE' } })
-  await prisma.maintenanceTicket.create({ data: { chargingSlotId: slots[5].id, technicianId: tech.id, title: 'Loi ket noi DC CCS2', description: 'Tru bao loi E-04', status: 'IN_PROGRESS' } })
-  await prisma.maintenanceTicket.create({ data: { chargingSlotId: slots[3].id, title: 'Man hinh khong hien thi', description: 'Man hinh bi den', status: 'OPEN' } })
-  await prisma.maintenanceTicket.create({ data: { chargingSlotId: slots[25].id, technicianId: tech.id, title: 'Bao tri dinh ky', description: 'Bao tri 6 thang', status: 'IN_PROGRESS' } })
-  await prisma.notification.createMany({ data: [
-    { userId: cust.id, title: 'Dat lich thanh cong', message: 'Ban da dat lich sac tai Tram Q1', type: 'SUCCESS' },
-    { userId: cust2.id, title: 'Thanh toan thanh cong', message: 'Hoa don 128,250 VND da thanh toan', type: 'SUCCESS' },
-    { userId: tech.id, title: 'Ticket moi', message: 'Co su co moi tai Q1-06', type: 'WARNING' },
-  ]})
-  console.log('Seed OK!')
-  console.log('admin@evcharge.com / 123456')
-  console.log('customer@evcharge.com / 123456')
-  console.log('tech@evcharge.com / 123456')
-  process.exit(0)
+  const pw = await bcrypt.hash("123456", 10);
+
+  await prisma.user.upsert({ where: { email: "admin@evcharge.com" }, update: {}, create: { email: "admin@evcharge.com", password: pw, name: "Admin", role: "ADMIN" } });
+  await prisma.user.upsert({ where: { email: "customer@evcharge.com" }, update: {}, create: { email: "customer@evcharge.com", password: pw, name: "Nguyen Van A", phone: "0901234567", role: "CUSTOMER", loyaltyPoints: 350, loyaltyTier: "BRONZE" } });
+  await prisma.user.upsert({ where: { email: "vip@evcharge.com" }, update: {}, create: { email: "vip@evcharge.com", password: pw, name: "Tran Thi Vip", phone: "0908889999", role: "CUSTOMER", loyaltyPoints: 2500, loyaltyTier: "GOLD" } });
+  await prisma.user.upsert({ where: { email: "tech@evcharge.com" }, update: {}, create: { email: "tech@evcharge.com", password: pw, name: "Tran Thi B", phone: "0907654321", role: "TECHNICIAN" } });
+  await prisma.user.upsert({ where: { email: "tech2@evcharge.com" }, update: {}, create: { email: "tech2@evcharge.com", password: pw, name: "Le Van C", phone: "0903334444", role: "TECHNICIAN" } });
+
+  // Tariffs
+  const tariffData = [
+    { name: "Đêm thấp điểm", startHour: 0, endHour: 6, ratePerKwh: 1500, isPeak: false },
+    { name: "Sáng thường", startHour: 6, endHour: 9, ratePerKwh: 2000, isPeak: false },
+    { name: "Sáng cao điểm", startHour: 9, endHour: 11, ratePerKwh: 3500, isPeak: true },
+    { name: "Trưa thường", startHour: 11, endHour: 17, ratePerKwh: 2000, isPeak: false },
+    { name: "Tối cao điểm", startHour: 17, endHour: 20, ratePerKwh: 3500, isPeak: true },
+    { name: "Tối thường", startHour: 20, endHour: 24, ratePerKwh: 2000, isPeak: false },
+  ];
+  for (const t of tariffData) {
+    const exists = await prisma.tariff.findFirst({ where: { name: t.name } });
+    if (!exists) await prisma.tariff.create({ data: t });
+  }
+
+  // Stations
+  const stationData = [
+    { name: "EV Station Quan 1", address: "123 Nguyen Hue", city: "Ho Chi Minh", district: "Quan 1", lat: 10.7769, lng: 106.7009 },
+    { name: "EV Station Quan 7", address: "456 Nguyen Thi Thap", city: "Ho Chi Minh", district: "Quan 7", lat: 10.7289, lng: 106.7218 },
+    { name: "EV Station Thu Duc", address: "789 Vo Van Ngan", city: "Ho Chi Minh", district: "Thu Duc", lat: 10.8500, lng: 106.7717 },
+    { name: "EV Station Binh Thanh", address: "321 Dien Bien Phu", city: "Ho Chi Minh", district: "Binh Thanh", lat: 10.8031, lng: 106.7143 },
+    { name: "EV Station Go Vap", address: "654 Nguyen Oanh", city: "Ho Chi Minh", district: "Go Vap", lat: 10.8380, lng: 106.6650 },
+    { name: "EV Station Ha Noi Ba Dinh", address: "12 Phan Dinh Phung", city: "Ha Noi", district: "Ba Dinh", lat: 21.0381, lng: 105.8333 },
+    { name: "EV Station Ha Noi Cau Giay", address: "88 Tran Duy Hung", city: "Ha Noi", district: "Cau Giay", lat: 21.0192, lng: 105.7905 },
+  ];
+
+  const connectors = ["CCS2", "CHAdeMO", "Type2", "GB/T"];
+  const powers = [50, 100, 22, 7];
+
+  for (const sd of stationData) {
+    const station = await prisma.station.upsert({
+      where: { id: sd.name }, update: {}, create: { id: sd.name, ...sd, openHours: "06:00 - 22:00", phone: "1900xxxx" }
+    });
+    for (let i = 0; i < 6; i++) {
+      const slotId = `${station.id}-slot-${i+1}`;
+      const slotNum = `${String.fromCharCode(65 + Math.floor(i/2))}${(i%2)+1}`;
+      await prisma.slot.upsert({
+        where: { id: slotId }, update: {},
+        create: {
+          id: slotId, slotNumber: slotNum, connectorType: connectors[i % 4], powerKw: powers[i % 4], stationId: station.id,
+          qrCode: `EV-${station.id.replace(/[^a-zA-Z0-9]/g, "")}-${slotNum}`,
+          status: i < 4 ? "AVAILABLE" : i === 4 ? "OCCUPIED" : "MAINTENANCE"
+        }
+      });
+    }
+  }
+
+  // VOUCHERS
+  const today = new Date();
+  const next30 = new Date(today.getTime() + 30 * 86400000);
+  const next7 = new Date(today.getTime() + 7 * 86400000);
+  const next90 = new Date(today.getTime() + 90 * 86400000);
+  const voucherData = [
+    { code: "WELCOME50", name: "Khuyến mãi tân thành viên", description: "Giảm 50% tối đa 50K cho lần đầu", type: "PERCENT", value: 50, minAmount: 0, maxDiscount: 50000, usageLimit: 1000, perUserLimit: 1, validFrom: today, validUntil: next90 },
+    { code: "EVDAY10", name: "Ngày EV - Giảm 10%", description: "Giảm 10% mọi đơn", type: "PERCENT", value: 10, minAmount: 50000, maxDiscount: 30000, usageLimit: 500, perUserLimit: 3, validFrom: today, validUntil: next30 },
+    { code: "FREE20K", name: "Tặng 20K", description: "Giảm trực tiếp 20,000 ₫", type: "FIXED", value: 20000, minAmount: 100000, perUserLimit: 5, validFrom: today, validUntil: next30 },
+    { code: "PEAK15", name: "Giảm giờ cao điểm 15%", description: "Giảm 15% khi sạc giờ cao điểm", type: "PERCENT", value: 15, minAmount: 0, maxDiscount: 100000, usageLimit: 200, perUserLimit: 2, validFrom: today, validUntil: next7 },
+    { code: "VIP100K", name: "VIP - Tặng 100K", description: "Voucher VIP exclusive", type: "FIXED", value: 100000, minAmount: 200000, usageLimit: 50, perUserLimit: 1, validFrom: today, validUntil: next90 },
+  ];
+  for (const v of voucherData) {
+    const exists = await prisma.voucher.findUnique({ where: { code: v.code } });
+    if (!exists) await prisma.voucher.create({ data: v });
+  }
+
+  // Sample reviews
+  const customer = await prisma.user.findUnique({ where: { email: "customer@evcharge.com" } });
+  const vip = await prisma.user.findUnique({ where: { email: "vip@evcharge.com" } });
+  const station1 = await prisma.station.findFirst({ where: { id: "EV Station Quan 1" } });
+
+  if (customer && vip && station1) {
+    await prisma.review.upsert({
+      where: { userId_stationId: { userId: customer.id, stationId: station1.id } },
+      update: {},
+      create: { userId: customer.id, stationId: station1.id, rating: 5, comment: "Trạm sạc hiện đại, sạch đẹp. Tốc độ sạc nhanh, nhân viên thân thiện.", verified: true }
+    });
+    await prisma.review.upsert({
+      where: { userId_stationId: { userId: vip.id, stationId: station1.id } },
+      update: {},
+      create: { userId: vip.id, stationId: station1.id, rating: 4, comment: "Vị trí thuận tiện. Giá hơi cao vào giờ cao điểm.", verified: true }
+    });
+    const all = await prisma.review.findMany({ where: { stationId: station1.id } });
+    const avg = all.reduce((s, r) => s + r.rating, 0) / all.length;
+    await prisma.station.update({ where: { id: station1.id }, data: { rating: avg, reviewCount: all.length } });
+  }
+
+  // Wallets
+  if (customer) await prisma.wallet.upsert({ where: { userId: customer.id }, update: {}, create: { userId: customer.id, balance: 500000 } });
+  if (vip) await prisma.wallet.upsert({ where: { userId: vip.id }, update: {}, create: { userId: vip.id, balance: 2000000 } });
+
+  console.log("Seed done!");
+  console.log("- 5 users (admin, customer, vip, 2 tech)");
+  console.log("- 6 tariffs, 7 stations, 42 slots");
+  console.log("- 5 vouchers (WELCOME50, EVDAY10, FREE20K, PEAK15, VIP100K)");
+  console.log("- Sample reviews + wallets");
 }
-main().catch(e => { console.error(e); process.exit(1) })
+
+main().catch(console.error).finally(() => prisma.$disconnect());

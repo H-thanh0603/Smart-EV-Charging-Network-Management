@@ -1,9 +1,15 @@
-import path from 'node:path'
-import { defineConfig } from 'prisma/config'
+import { defineConfig } from "prisma/config";
 
 export default defineConfig({
-  schema: path.join('prisma', 'schema.prisma'),
-  datasource: {
-    url: 'file:./prisma/dev.db',
+  earlyAccess: true,
+  schema: "prisma/schema.prisma",
+  migrate: {
+    adapter: async () => {
+      const { PrismaLibSql } = await import("@prisma/adapter-libsql");
+      return new PrismaLibSql({ url: "file:D:/ev-charging/prisma/dev.db" });
+    },
   },
-})
+  datasource: {
+    url: "file:D:/ev-charging/prisma/dev.db",
+  },
+});

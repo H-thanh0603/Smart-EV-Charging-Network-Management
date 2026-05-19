@@ -1,26 +1,80 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --hover: #f1f5f9;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  --bg: #0f172a;
+  --card-bg: #1e293b;
+  --border: #334155;
+  --text: #f1f5f9;
+  --text-muted: #94a3b8;
+  --hover: #334155;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html, body { height: 100%; }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: background-color 0.2s, color 0.2s;
 }
+
+@layer components {
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    @apply rounded-xl shadow-sm transition-shadow hover:shadow-md;
+  }
+  .input {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    @apply px-3 py-2 rounded-lg w-full text-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500;
+  }
+  .input:disabled { opacity: 0.6; cursor: not-allowed; }
+  .label { @apply block text-sm font-medium mb-1.5; color: var(--text-muted); }
+  .btn-primary { @apply inline-flex items-center justify-center px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium text-sm transition shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed; }
+  .btn-secondary {
+    background: var(--card-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-sm transition;
+  }
+  .btn-secondary:hover { background: var(--hover); }
+  .btn-danger { @apply inline-flex items-center justify-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium text-sm transition shadow-sm; }
+  .badge-green { @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-100 text-emerald-700; }
+  .badge-red { @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-red-100 text-red-700; }
+  .badge-yellow { @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-amber-100 text-amber-700; }
+  .badge-blue { @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-700; }
+  .badge-purple { @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-100 text-purple-700; }
+  .badge-gray { @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700; }
+  .skeleton { background: var(--hover); @apply rounded-lg animate-pulse; }
+}
+
+.dark .badge-green { @apply bg-emerald-900/40 text-emerald-300; }
+.dark .badge-red { @apply bg-red-900/40 text-red-300; }
+.dark .badge-yellow { @apply bg-amber-900/40 text-amber-300; }
+.dark .badge-blue { @apply bg-blue-900/40 text-blue-300; }
+.dark .badge-purple { @apply bg-purple-900/40 text-purple-300; }
+.dark .badge-gray { @apply bg-slate-800 text-slate-300; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fadeIn { animation: fadeIn 0.2s ease-out; }
+@keyframes pulse-glow { 0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); } 50% { box-shadow: 0 0 0 8px rgba(16,185,129,0); } }
+.animate-pulse-glow { animation: pulse-glow 2s infinite; }
+
+@media print {
+  body { background: white !important; color: black !important; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  @page { margin: 1cm; }
+}
+.print-only { display: none; }

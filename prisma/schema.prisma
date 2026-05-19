@@ -7,57 +7,192 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  name          String
-  email         String   @unique
-  password      String
-  role          String   @default("CUSTOMER")
-  walletBalance Float    @default(500000)
-  phone         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  avatar    String?
+  role      String   @default("CUSTOMER")
+  loyaltyPoints Int  @default(0)
+  loyaltyTier   String @default("BRONZE")
+  emailVerified Boolean @default(false)
+  resetToken    String?
+  resetTokenExp DateTime?
+  theme         String  @default("light")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  reservations       Reservation[]
-  chargingSessions   ChargingSession[]
-  invoices           Invoice[]
-  maintenanceTickets MaintenanceTicket[]
-  notifications      Notification[]
+  reservations     Reservation[]
+  recurringReservations RecurringReservation[]
+  chargingSessions ChargingSession[]
+  invoices         Invoice[]
+  wallet           Wallet?
+  walletTransactions WalletTransaction[]
+  maintenanceAssigned MaintenanceTicket[] @relation("AssignedTechnician")
+  maintenanceCreated  MaintenanceTicket[] @relation("CreatedBy")
+  notifications    Notification[]
+  reviews          Review[]
+  loyaltyTransactions LoyaltyTransaction[]
+  payments         Payment[]
+  voucherUsages    VoucherUsage[]
+  pushSubscriptions PushSubscription[]
 }
 
 model Station {
-  id           String   @id @default(cuid())
-  name         String
-  address      String
-  latitude     Float
-  longitude    Float
-  openingHours String   @default("06:00-22:00")
-  status       String   @default("ACTIVE")
-  imageUrl     String?
-  description  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  address   String
+  city      String
+  district  String?
+  lat       Float?
+  lng       Float?
+  status    String   @default("ACTIVE")
+  openHours String?
+  phone     String?
+  rating    Float    @default(0)
+  reviewCount Int    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  chargingSlots ChargingSlot[]
-  reservations  Reservation[]
+  slots Slot[]
+  maintenanceTickets MaintenanceTicket[]
+  reviews Review[]
 }
 
-model ChargingSlot {
+model Slot {
   id            String   @id @default(cuid())
-  stationId     String
-  code          String
+  slotNumber    String
   connectorType String
   powerKw       Float
-  pricePerKwh   Float
   status        String   @default("AVAILABLE")
+  qrCode        String?  @unique
+  stationId     String
+  lastError     String?
+  lastHeartbeat DateTime?
+  lastCheckAt   DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  station            Station             @relation(fields: [stationId], references: [id])
-  reservations       Reservation[]
-  chargingSessions   ChargingSession[]
+  station      Station           @relation(fields: [stationId], references: [id])
+  reservations Reservation[]
+  sessions     ChargingSession[]
   maintenanceTickets MaintenanceTicket[]
+}
 
-  @@unique([stationId, code])
+model Reservation {
+  id        String   @id @default(cuid())
+  userId    String
+  slotId    String
+  startTime DateTime
+  endTime   DateTime
+  status    String   @default("PENDING")
+  recurringId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User    @relation(fields: [userId], references: [id])
+  slot      Slot    @relation(fields: [slotId], references: [id])
+  session   ChargingSession?
+  recurring RecurringReservation? @relation(fields: [recurringId], references: [id])
+}
+
+model RecurringReservation {
+  id        String   @id @default(cuid())
+  userId    String
+  slotId    String
+  daysOfWeek String
+  startHour Int
+  endHour   Int
+  startDate DateTime
+  endDate   DateTime?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id])
+  reservations Reservation[]
+}
+
+model ChargingSession {
+  id            String    @id @default(cuid())
+  userId        String
+  slotId        String
+  reservationId String?   @unique
+  startTime     DateTime
+  endTime       DateTime?
+  energyKwh     Float?
+  status        String    @default("ACTIVE")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id])
+  slot        Slot         @relation(fields: [slotId], references: [id])
+  reservation Reservation? @relation(fields: [reservationId], references: [id])
+  invoice     Invoice?
+}
+
+model Invoice {
+  id        String    @id @default(cuid())
+  invoiceNo String?   @unique
+  sessionId String    @unique
+  userId    String
+  energyKwh Float
+  subtotal  Float?
+  discount  Float     @default(0)
+  voucherCode String?
+  amount    Float
+  pointsEarned Int    @default(0)
+  pointsRedeemed Int  @default(0)
+  status    String    @default("UNPAID")
+  paidAt    DateTime?
+  paymentMethod String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  session ChargingSession @relation(fields: [sessionId], references: [id])
+  user    User            @relation(fields: [userId], references: [id])
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  balance   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model WalletTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  amount    Float
+  balance   Float
+  note      String?
+  paymentId String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  userId        String
+  txnRef        String   @unique
+  amount        Float
+  status        String   @default("PENDING")
+  provider      String
+  responseCode  String?
+  bankCode      String?
+  bankTranNo    String?
+  ipAddress     String?
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Tariff {
@@ -65,89 +200,31 @@ model Tariff {
   name        String
   startHour   Int
   endHour     Int
-  multiplier  Float    @default(1.0)
-  description String?
+  ratePerKwh  Float
+  isPeak      Boolean  @default(false)
+  active      Boolean  @default(true)
   createdAt   DateTime @default(now())
-}
-
-model Reservation {
-  id              String   @id @default(cuid())
-  userId          String
-  stationId       String
-  chargingSlotId  String
-  startTime       DateTime
-  endTime         DateTime
-  status          String   @default("RESERVED")
-  checkInDeadline DateTime
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  user            User             @relation(fields: [userId], references: [id])
-  station         Station          @relation(fields: [stationId], references: [id])
-  chargingSlot    ChargingSlot     @relation(fields: [chargingSlotId], references: [id])
-  chargingSession ChargingSession?
-}
-
-model ChargingSession {
-  id             String    @id @default(cuid())
-  userId         String
-  reservationId  String?   @unique
-  chargingSlotId String
-  startTime      DateTime  @default(now())
-  endTime        DateTime?
-  consumedKwh    Float?
-  status         String    @default("ACTIVE")
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  user         User         @relation(fields: [userId], references: [id])
-  reservation  Reservation? @relation(fields: [reservationId], references: [id])
-  chargingSlot ChargingSlot @relation(fields: [chargingSlotId], references: [id])
-  invoice      Invoice?
-}
-
-model Invoice {
-  id              String   @id @default(cuid())
-  sessionId       String   @unique
-  userId          String
-  amount          Float
-  kwh             Float
-  durationMinutes Int
-  status          String   @default("UNPAID")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  session ChargingSession @relation(fields: [sessionId], references: [id])
-  user    User            @relation(fields: [userId], references: [id])
-  payment Payment?
-}
-
-model Payment {
-  id        String    @id @default(cuid())
-  invoiceId String    @unique
-  method    String    @default("WALLET")
-  amount    Float
-  status    String    @default("PENDING")
-  paidAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  updatedAt   DateTime @updatedAt
 }
 
 model MaintenanceTicket {
-  id             String    @id @default(cuid())
-  chargingSlotId String
-  technicianId   String?
-  title          String
-  description    String
-  status         String    @default("OPEN")
-  createdAt      DateTime  @default(now())
-  resolvedAt     DateTime?
-  updatedAt      DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  stationId    String
+  slotId       String?
+  title        String
+  description  String
+  priority     String    @default("MEDIUM")
+  status       String    @default("OPEN")
+  createdById  String
+  assignedToId String?
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  chargingSlot ChargingSlot @relation(fields: [chargingSlotId], references: [id])
-  technician   User?        @relation(fields: [technicianId], references: [id])
+  station    Station @relation(fields: [stationId], references: [id])
+  slot       Slot?   @relation(fields: [slotId], references: [id])
+  createdBy  User    @relation("CreatedBy", fields: [createdById], references: [id])
+  assignedTo User?   @relation("AssignedTechnician", fields: [assignedToId], references: [id])
 }
 
 model Notification {
@@ -157,7 +234,117 @@ model Notification {
   message   String
   type      String   @default("INFO")
   read      Boolean  @default(false)
+  link      String?
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  stationId String
+  rating    Int
+  comment   String?
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  station Station @relation(fields: [stationId], references: [id])
+
+  @@unique([userId, stationId])
+}
+
+model LoyaltyTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  points    Int
+  balance   Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Voucher {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  type        String   // PERCENT or FIXED
+  value       Float    // % (1-100) or VND amount
+  minAmount   Float    @default(0)
+  maxDiscount Float?
+  usageLimit  Int?     // total times can be used (null = unlimited)
+  perUserLimit Int     @default(1)
+  validFrom   DateTime @default(now())
+  validUntil  DateTime
+  active      Boolean  @default(true)
+  usedCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  usages VoucherUsage[]
+}
+
+model VoucherUsage {
+  id        String   @id @default(cuid())
+  voucherId String
+  userId    String
+  invoiceId String?
+  discount  Float
+  createdAt DateTime @default(now())
+
+  voucher Voucher @relation(fields: [voucherId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Webhook {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  events      String
+  secret      String
+  active      Boolean  @default(true)
+  lastTriggered DateTime?
+  failureCount Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model WebhookLog {
+  id          String   @id @default(cuid())
+  webhookId   String
+  event       String
+  payload     String
+  responseStatus Int?
+  responseBody String?
+  success     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model ApiKey {
+  id        String   @id @default(cuid())
+  name      String
+  key       String   @unique
+  partnerId String?
+  active    Boolean  @default(true)
+  lastUsed  DateTime?
+  rateLimit Int      @default(1000)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
