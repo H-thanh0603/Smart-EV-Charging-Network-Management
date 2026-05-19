@@ -24,7 +24,7 @@ export default function LoginPage() {
     localStorage.setItem("token", data.token);
     localStorage.setItem("user", JSON.stringify(data.user));
     if (data.user.role === "ADMIN") router.push("/admin");
-    else if (data.user.role === "TECHNICIAN") router.push("/admin/maintenance");
+    else if (data.user.role === "TECHNICIAN") router.push("/technician");
     else if (data.user.role === "DRIVER") router.push("/driver");
     else router.push("/stations");
   }

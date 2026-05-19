@@ -105,8 +105,9 @@ export default function AdminStationsPage() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur flex items-center justify-center p-4 overflow-y-auto" onClick={() => setShowForm(false)}>
-          <div className="card max-w-2xl w-full p-6 my-8" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur flex items-start sm:items-center justify-center p-4 overflow-y-auto" onClick={() => setShowForm(false)}>
+          <div className="card max-w-2xl w-full my-4 sm:my-8 max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="p-6 overflow-y-auto flex-1">
             <h3 className="text-xl font-bold mb-4">{editing ? "Sửa trạm sạc" : "Thêm trạm sạc mới"}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2"><label className="label">Tên trạm *</label><input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="input" /></div>
@@ -156,7 +157,8 @@ export default function AdminStationsPage() {
                 </div>
               </div>
             </div>
-            <div className="flex gap-2 mt-6">
+            </div>
+            <div className="flex gap-2 p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
               <button onClick={save} disabled={!form.name || !form.address} className="btn-primary flex-1">💾 {editing ? "Lưu" : "Thêm"}</button>
               <button onClick={() => setShowForm(false)} className="btn-secondary">Huỷ</button>
             </div>

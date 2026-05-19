@@ -18,8 +18,16 @@ export default function StationsPage() {
   const [locError, setLocError] = useState("");
   const [findingLoc, setFindingLoc] = useState(false);
 
+  async function loadLive() {
+    const res = await fetch("/api/stations/live", { credentials: "include" });
+    if (res.ok) setStations(await res.json());
+    setLoading(false);
+  }
+
   useEffect(() => {
-    fetch("/api/stations").then(r => r.json()).then(d => { setStations(d); setLoading(false); });
+    loadLive();
+    const interval = setInterval(loadLive, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   function findNearMe() {
@@ -114,7 +122,9 @@ export default function StationsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filtered.map((s, i) => {
-                const avail = s.slots.filter((sl: any) => sl.status === "AVAILABLE").length;
+                const avail = s.available !== undefined ? s.available : (s.slots?.filter((sl: any) => sl.status === "AVAILABLE").length || 0);
+                  const total = s.total !== undefined ? s.total : (s.slots?.length || 0);
+                  const liveStatus = s.status;
                 return (
                   <Link key={s.id} href={`/stations/${s.id}`} className="card overflow-hidden hover:border-emerald-400 hover:scale-[1.02] transition group block">
                     {s.thumbnailUrl ? (
@@ -122,7 +132,9 @@ export default function StationsPage() {
                         <img src={s.thumbnailUrl} alt={s.name} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" loading="lazy" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                         {s.isPremium && <span className="absolute top-2 left-2 bg-gradient-to-r from-amber-400 to-pink-500 text-white text-xs font-bold px-2 py-0.5 rounded-md shadow-lg">⭐ Premium</span>}
-                        <span className={`absolute top-2 right-2 shadow-lg text-xs px-2 py-0.5 rounded-md font-medium ${avail > 0 ? "bg-emerald-500 text-white" : "bg-red-500 text-white"}`}>{avail}/{s.slots.length} trống</span>
+                        <span className={`absolute top-2 right-2 shadow-lg text-xs px-2 py-1 rounded-md font-bold ${liveStatus === "FREE" ? "bg-emerald-500 text-white" : liveStatus === "BUSY" ? "bg-amber-500 text-white" : "bg-red-500 text-white"}`}>
+                          {liveStatus === "FREE" ? "● Trống" : liveStatus === "BUSY" ? "● Đông" : "● Đầy"} {avail}/{total}
+                        </span>
                         {s.brand && <span className="absolute bottom-2 left-2 text-xs font-bold text-white drop-shadow-lg">{s.brand}</span>}
                       </div>
                     ) : (

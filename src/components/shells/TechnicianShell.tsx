@@ -4,9 +4,10 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 
 const techNav = [
+  { href: "/technician", label: "Tổng quan", icon: "📊", desc: "Dashboard" },
   { href: "/admin/maintenance", label: "Tickets", icon: "🔧", desc: "Việc cần làm" },
-  { href: "/stations", label: "Trạm sạc", icon: "🏢", desc: "Bản đồ trạm" },
-  { href: "/notifications", label: "Thông báo", icon: "🔔", desc: "Cập nhật mới" },
+  { href: "/stations", label: "Trạm sạc", icon: "🏢", desc: "Trạm" },
+  { href: "/notifications", label: "Thông báo", icon: "🔔", desc: "Cập nhật" },
 ];
 
 export default function TechnicianShell({ children, title, user }: { children: React.ReactNode; title?: string; user: any }) {
@@ -40,7 +41,7 @@ export default function TechnicianShell({ children, title, user }: { children: R
   }
 
   return (
-    <div className="min-h-screen pb-24 lg:pb-0" style={{ background: "var(--bg)" }}>
+    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
       {/* TOP BAR — Orange themed */}
       <header className="sticky top-0 z-30 backdrop-blur-xl bg-gradient-to-r from-orange-500/10 to-amber-500/10 dark:from-orange-900/20 dark:to-amber-900/20 border-b border-orange-200/50 dark:border-orange-800/30">
         <div className="px-4 lg:px-6 h-16 flex items-center justify-between">
@@ -96,22 +97,7 @@ export default function TechnicianShell({ children, title, user }: { children: R
       <main className="max-w-5xl mx-auto px-4 lg:px-6 py-6 animate-fadeIn">{children}</main>
 
       {/* BOTTOM NAV — Big tap targets */}
-      <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl bg-white/90 dark:bg-slate-900/90 border-t border-slate-200/50 dark:border-slate-700/50">
-        <div className="grid grid-cols-3 max-w-md mx-auto">
-          {techNav.map(item => {
-            const active = pathname.startsWith(item.href);
-            return (
-              <Link key={item.href} href={item.href}
-                className={`flex flex-col items-center justify-center py-3 transition relative ${active ? "text-orange-600" : "text-slate-500"}`}>
-                {active && <div className="absolute top-0 w-12 h-1 bg-gradient-to-r from-orange-400 to-amber-400 rounded-full"></div>}
-                <span className={`text-2xl transition-transform ${active ? "scale-110" : ""}`}>{item.icon}</span>
-                <span className="text-xs mt-1 font-bold">{item.label}</span>
-                <span className="text-[9px] text-slate-400">{item.desc}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+
     </div>
   );
 }

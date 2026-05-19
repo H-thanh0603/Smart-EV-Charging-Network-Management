@@ -122,6 +122,26 @@ async function main() {
       thumbnailUrl: "https://images.unsplash.com/photo-1697204579729-8d52d9f7dbf0?w=400&q=80",
       amenities: "wifi,toilet,cafe,parking,shopping,food-court",
       description: "Royal City TTTM ngầm, sạc khi xem phim hoặc ăn uống. Trượt băng và bowling cạnh." },
+    { name: "V-GREEN Vincom Plaza Cộng Hòa", address: "26-26B Cộng Hòa, P.4", city: "Hồ Chí Minh", district: "Tân Bình", lat: 10.8009, lng: 106.6447, brand: "V-GREEN", openHours: "06:00 - 23:00",
+      imageUrl: "https://images.unsplash.com/photo-1647500666543-d5ddd6f8ec40?w=800&q=80",
+      thumbnailUrl: "https://images.unsplash.com/photo-1647500666543-d5ddd6f8ec40?w=400&q=80",
+      amenities: "wifi,toilet,cafe,parking,shopping",
+      description: "Vincom Plaza Cộng Hòa, gần sân bay Tân Sơn Nhất. Tài xế Xanh SM/Be hay sạc giữa ca." },
+    { name: "V-GREEN Saigon Centre Q1", address: "65 Lê Lợi, Bến Nghé", city: "Hồ Chí Minh", district: "Quận 1", lat: 10.7728, lng: 106.7000, brand: "V-GREEN", isPremium: true, openHours: "24/7",
+      imageUrl: "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=800&q=80",
+      thumbnailUrl: "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=400&q=80",
+      amenities: "wifi,toilet,cafe,parking,shopping,vip-lounge",
+      description: "Trung tâm Saigon Centre cao cấp, gần phố đi bộ Nguyễn Huệ. Có Takashimaya, Starbucks, food court Q.1." },
+    { name: "V-GREEN Vincom Đồng Khởi (Tầng B2)", address: "70-72 Lê Thánh Tôn", city: "Hồ Chí Minh", district: "Quận 1", lat: 10.7770, lng: 106.7022, brand: "V-GREEN", openHours: "07:00 - 22:30",
+      imageUrl: "https://images.unsplash.com/photo-1697204579729-8d52d9f7dbf0?w=800&q=80",
+      thumbnailUrl: "https://images.unsplash.com/photo-1697204579729-8d52d9f7dbf0?w=400&q=80",
+      amenities: "wifi,toilet,cafe,parking,shopping",
+      description: "Khu hầm B2 Vincom Đồng Khởi, 12 trụ sạc nhanh CCS2. Đăng ký sạc qua app VinFast." },
+    { name: "V-GREEN GigaMall Phạm Văn Đồng", address: "240-242 Phạm Văn Đồng", city: "Hồ Chí Minh", district: "Thủ Đức", lat: 10.8478, lng: 106.7173, brand: "V-GREEN", openHours: "06:00 - 23:00",
+      imageUrl: "https://images.unsplash.com/photo-1683009427666-340595e57e43?w=800&q=80",
+      thumbnailUrl: "https://images.unsplash.com/photo-1683009427666-340595e57e43?w=400&q=80",
+      amenities: "wifi,toilet,cafe,parking,shopping,food-court",
+      description: "GigaMall TTTM lớn nhất Thủ Đức. Khu Phạm Văn Đồng đông cư dân, tài xế Xanh SM thường ghé." },
   ];
 
   // V-GREEN ưu tiên CCS2 + Type 2 (cho VinFast). Trạm khác có thêm CHAdeMO + GB/T
@@ -332,7 +352,7 @@ async function main() {
   console.log("- 7 users (Admin, 2 Customer, 2 Driver Xanh SM, 2 Tech)");
   console.log("- 2 Fleets: Xanh SM (15% off), Lazada EV (10% off)");
   console.log("- 4 vehicles (4 VinFast)");
-  console.log("- 12 stations: 9 V-GREEN HCM + 2 V-GREEN HN + 2 third-party");
+  console.log("- 16 stations: 13 V-GREEN HCM + 2 V-GREEN HN + 2 third-party");
   console.log("- 6 tariffs (V-GREEN realistic: 2,570 - 4,580 VND/kWh)");
   console.log("- 6 vouchers");
 }
