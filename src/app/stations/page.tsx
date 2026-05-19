@@ -13,6 +13,7 @@ export default function StationsPage() {
   const [district, setDistrict] = useState("ALL");
   const [connector, setConnector] = useState("ALL");
   const [power, setPower] = useState("ALL");
+  const [brand, setBrand] = useState("ALL");
   const [loading, setLoading] = useState(true);
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
   const [locError, setLocError] = useState("");
@@ -66,6 +67,7 @@ export default function StationsPage() {
       if (district !== "ALL" && s.district !== district) return false;
       if (connector !== "ALL" && !s.slots.some((sl: any) => sl.connectorType === connector)) return false;
       if (power !== "ALL" && !s.slots.some((sl: any) => sl.powerKw === parseFloat(power))) return false;
+      if (brand !== "ALL" && s.brand !== brand) return false;
       return true;
     });
     if (view === "near" && userLoc) {
@@ -75,7 +77,7 @@ export default function StationsPage() {
         .sort((a, b) => a.distance - b.distance);
     }
     return list;
-  }, [stations, search, district, connector, power, view, userLoc]);
+  }, [stations, search, district, connector, power, brand, view, userLoc]);
 
   return (
     <AppShell title="Trạm sạc">
@@ -108,6 +110,12 @@ export default function StationsPage() {
             <select value={connector} onChange={e => setConnector(e.target.value)} className="input">
               <option value="ALL">🔌 Tất cả chuẩn</option>
               {["CCS2","CHAdeMO","Type2","GB/T"].map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={brand} onChange={e => setBrand(e.target.value)} className="input">
+              <option value="ALL">🏢 Tất cả thương hiệu</option>
+              <option value="V-GREEN">⚡ V-GREEN (VinFast)</option>
+              <option value="ChargePlus">🔌 ChargePlus</option>
+              <option value="EVOne">🌿 EVOne</option>
             </select>
             <select value={power} onChange={e => setPower(e.target.value)} className="input">
               <option value="ALL">⚡ Tất cả công suất</option>
