@@ -95,21 +95,27 @@ export default function AdminShell({ children, title, user }: { children: React.
           </div>
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-black/20 backdrop-blur">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-pink-500 flex items-center justify-center text-white font-bold shadow-lg">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-black/30 backdrop-blur">
+          <div className="flex items-center gap-3 mb-3 p-2 rounded-lg bg-white/5">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-400 to-pink-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
               {user?.name?.[0]?.toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{user?.name}</p>
-              <p className="text-xs text-violet-200/70 truncate">Administrator</p>
+              <p className="text-sm font-bold text-white truncate">{user?.name}</p>
+              <p className="text-xs text-violet-200/80 truncate">⚡ Administrator</p>
             </div>
           </div>
-          <div className="flex gap-1">
-            <Link href="/profile" className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs text-violet-200 bg-white/5 hover:bg-white/10 transition">⚙️ Cài đặt</Link>
-            <button onClick={toggleTheme} className="px-2 py-1.5 rounded-lg text-xs text-violet-200 bg-white/5 hover:bg-white/10 transition" title="Toggle theme">{theme === "light" ? "🌙" : "☀️"}</button>
-            <button onClick={logout} className="px-2 py-1.5 rounded-lg text-xs text-red-300 bg-white/5 hover:bg-red-500/20 transition" title="Đăng xuất">🚪</button>
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <Link href="/profile" className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-sm text-violet-100 bg-white/10 hover:bg-white/20 transition font-medium">
+              <span>⚙️</span> Cài đặt
+            </Link>
+            <button onClick={toggleTheme} className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-sm text-violet-100 bg-white/10 hover:bg-white/20 transition font-medium">
+              <span>{theme === "light" ? "🌙" : "☀️"}</span> {theme === "light" ? "Tối" : "Sáng"}
+            </button>
           </div>
+          <button onClick={logout} className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-bold text-white bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 transition shadow-lg">
+            <span className="text-lg">🚪</span> Đăng xuất
+          </button>
         </div>
       </aside>
 

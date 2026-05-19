@@ -31,9 +31,10 @@ export default function DriverShell({ children, title, user }: { children: React
   }
 
   return (
-    <div className="min-h-screen pb-24 lg:pb-0" style={{ background: "var(--bg)" }}>
+    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
+      {/* TOP HEADER - Brand + Profile */}
       <header className="sticky top-0 z-30 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white shadow-lg">
-        <div className="px-4 lg:px-6 h-16 flex items-center justify-between">
+        <div className="px-4 lg:px-6 h-16 flex items-center justify-between max-w-7xl mx-auto">
           <Link href="/driver" className="flex items-center gap-3 group">
             <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-xl shadow-lg">🚗</div>
             <div>
@@ -73,26 +74,28 @@ export default function DriverShell({ children, title, user }: { children: React
             </div>
           </div>
         </div>
-        {title && <div className="border-t border-white/10 px-4 py-3"><h1 className="text-lg font-bold">{title}</h1></div>}
+
+        {/* TOP NAV — moved from bottom to here */}
+        <nav className="border-t border-white/10 bg-white/5 backdrop-blur">
+          <div className="max-w-7xl mx-auto px-2 lg:px-6 flex overflow-x-auto scrollbar-hide">
+            {driverNav.map(item => {
+              const active = pathname === item.href || (item.href !== "/driver" && pathname.startsWith(item.href));
+              return (
+                <Link key={item.href} href={item.href}
+                  className={`flex items-center gap-2 px-4 py-3 transition relative whitespace-nowrap ${active ? "text-white font-semibold" : "text-emerald-100 hover:text-white"}`}>
+                  <span className="text-lg">{item.icon}</span>
+                  <span className="text-sm">{item.label}</span>
+                  {active && <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-white rounded-full"></div>}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+
+        {title && <div className="border-t border-white/10 px-4 py-3 max-w-7xl mx-auto"><h1 className="text-lg font-bold">{title}</h1></div>}
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 lg:px-6 py-6 animate-fadeIn">{children}</main>
-
-      <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl bg-white/95 dark:bg-slate-900/95 border-t border-slate-200/50 dark:border-slate-700/50">
-        <div className="grid grid-cols-5 max-w-md mx-auto">
-          {driverNav.map(item => {
-            const active = pathname.startsWith(item.href);
-            return (
-              <Link key={item.href} href={item.href}
-                className={`flex flex-col items-center justify-center py-2.5 transition relative ${active ? "text-emerald-600" : "text-slate-500"}`}>
-                {active && <div className="absolute top-0 w-10 h-0.5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"></div>}
-                <span className={`text-xl transition-transform ${active ? "scale-110" : ""}`}>{item.icon}</span>
-                <span className="text-[10px] mt-0.5 font-semibold">{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      <main className="max-w-7xl mx-auto px-4 lg:px-6 py-6 animate-fadeIn">{children}</main>
     </div>
   );
 }

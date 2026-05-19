@@ -1,107 +1,172 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 
-const PAGE_SIZE = 10;
+const ROLES = [
+  { v: "CUSTOMER", l: "Khách lẻ", color: "badge-blue" },
+  { v: "DRIVER", l: "Tài xế Xanh SM", color: "badge-green" },
+  { v: "TECHNICIAN", l: "Kỹ thuật viên", color: "badge-yellow" },
+  { v: "ADMIN", l: "Quản trị", color: "badge-purple" },
+];
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
+  const [fleets, setFleets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("ALL");
+  const [roleFilter, setRoleFilter] = useState("");
   const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
-  useEffect(() => {
+  const empty = { id: "", email: "", password: "", name: "", phone: "", role: "CUSTOMER", fleetId: "" };
+  const [form, setForm] = useState(empty);
+
+  async function load() {
+    setLoading(true);
     const token = localStorage.getItem("token");
-    fetch("/api/admin/users", { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.json()).then(d => { setUsers(d); setLoading(false); });
-  }, []);
+    const [r1, r2] = await Promise.all([
+      fetch("/api/admin/users", { headers: { Authorization: `Bearer ${token}` } }),
+      fetch("/api/admin/fleets", { headers: { Authorization: `Bearer ${token}` } }).catch(() => null)
+    ]);
+    setUsers(await r1.json());
+    if (r2 && r2.ok) setFleets(await r2.json());
+    setLoading(false);
+  }
+  useEffect(() => { load(); }, []);
 
-  const filtered = useMemo(() => users.filter(u => {
-    if (filter !== "ALL" && u.role !== filter) return false;
-    if (search && !u.name.toLowerCase().includes(search.toLowerCase()) && !u.email.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  }), [users, search, filter]);
+  function openCreate() { setEditing(null); setForm(empty); setShowForm(true); }
+  function openEdit(u: any) {
+    setEditing(u);
+    setForm({ id: u.id, email: u.email, password: "", name: u.name, phone: u.phone || "", role: u.role, fleetId: u.fleetId || "" });
+    setShowForm(true);
+  }
 
+  async function save() {
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/admin/users", {
+      method: editing ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(form)
+    });
+    if (res.ok) { setShowForm(false); load(); }
+    else { const d = await res.json(); alert(d.error || "Lỗi"); }
+  }
+
+  async function remove(id: string, name: string) {
+    if (!confirm(`Xoá user "${name}"?`)) return;
+    const token = localStorage.getItem("token");
+    const res = await fetch(`/api/admin/users?id=${id}`, {
+      method: "DELETE", headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) load();
+    else { const d = await res.json(); alert(d.error || "Lỗi"); }
+  }
+
+  const filtered = users.filter(u => {
+    const matchSearch = !search || u.name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase());
+    const matchRole = !roleFilter || u.role === roleFilter;
+    return matchSearch && matchRole;
+  });
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  useEffect(() => { setPage(1); }, [search, filter]);
-
-  const roleBadge = (r: string) => ({ ADMIN: "badge-red", TECHNICIAN: "badge-blue", MANAGER: "badge-purple", CUSTOMER: "badge-gray" }[r] || "badge-gray");
-
   return (
-    <AppShell title="Người dùng">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-800">Quản lý người dùng</h2>
-            <p className="text-sm text-slate-500 mt-1">{filtered.length} người dùng</p>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          <input type="text" placeholder="🔍 Tìm theo tên, email..." value={search} onChange={e => setSearch(e.target.value)} className="input flex-1" />
-          <select value={filter} onChange={e => setFilter(e.target.value)} className="input sm:w-48">
-            <option value="ALL">Tất cả vai trò</option>
-            <option value="ADMIN">Admin</option>
-            <option value="TECHNICIAN">Technician</option>
-            <option value="CUSTOMER">Customer</option>
+    <AppShell title="Quản lý người dùng">
+      <div className="flex flex-wrap gap-3 items-center justify-between mb-6">
+        <div className="flex gap-3 flex-1 min-w-0">
+          <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="🔍 Tìm tên / email..." className="input max-w-sm" />
+          <select value={roleFilter} onChange={e => { setRoleFilter(e.target.value); setPage(1); }} className="input max-w-xs">
+            <option value="">Tất cả vai trò</option>
+            {ROLES.map(r => <option key={r.v} value={r.v}>{r.l}</option>)}
           </select>
         </div>
+        <button onClick={openCreate} className="btn-primary">+ Thêm user</button>
+      </div>
 
-        {loading ? <div className="skeleton h-64"></div> : (
+      {showForm && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur flex items-center justify-center p-4" onClick={() => setShowForm(false)}>
+          <div className="card max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-bold mb-4">{editing ? "Sửa user" : "Thêm user mới"}</h3>
+            <div className="space-y-3">
+              <div><label className="label">Email *</label><input value={form.email} disabled={!!editing} onChange={e => setForm({...form, email: e.target.value})} className="input" /></div>
+              <div><label className="label">{editing ? "Mật khẩu mới (để trống nếu không đổi)" : "Mật khẩu *"}</label><input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="input" /></div>
+              <div><label className="label">Họ tên *</label><input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="input" /></div>
+              <div><label className="label">SĐT</label><input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="input" /></div>
+              <div><label className="label">Vai trò</label>
+                <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="input">
+                  {ROLES.map(r => <option key={r.v} value={r.v}>{r.l}</option>)}
+                </select>
+              </div>
+              {form.role === "DRIVER" && (
+                <div><label className="label">Fleet (đội xe)</label>
+                  <select value={form.fleetId} onChange={e => setForm({...form, fleetId: e.target.value})} className="input">
+                    <option value="">Không thuộc fleet</option>
+                    {fleets.map(f => <option key={f.id} value={f.id}>{f.name} (-{f.discountRate}%)</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2 mt-6">
+              <button onClick={save} disabled={!form.email || !form.name || (!editing && !form.password)} className="btn-primary flex-1">💾 {editing ? "Lưu" : "Thêm"}</button>
+              <button onClick={() => setShowForm(false)} className="btn-secondary">Huỷ</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="card overflow-hidden">
+        {loading ? <div className="skeleton h-32"></div> : (
           <>
-            <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50">
+                <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
                   <tr className="text-left">
-                    <th className="px-6 py-3 text-xs uppercase font-semibold tracking-wider text-slate-500">Người dùng</th>
-                    <th className="px-6 py-3 text-xs uppercase font-semibold tracking-wider text-slate-500">Email</th>
-                    <th className="px-6 py-3 text-xs uppercase font-semibold tracking-wider text-slate-500">Điện thoại</th>
-                    <th className="px-6 py-3 text-xs uppercase font-semibold tracking-wider text-slate-500">Điểm</th>
-                    <th className="px-6 py-3 text-xs uppercase font-semibold tracking-wider text-slate-500">Vai trò</th>
+                    <th className="px-4 py-3 font-semibold">User</th>
+                    <th className="px-4 py-3 font-semibold">Email</th>
+                    <th className="px-4 py-3 font-semibold">Vai trò</th>
+                    <th className="px-4 py-3 font-semibold">Loyalty</th>
+                    <th className="px-4 py-3 font-semibold text-right">Hành động</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paged.map(u => (
-                    <tr key={u.id} className="border-t border-slate-100 hover:bg-slate-50/50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white font-semibold">
-                            {u.name[0]?.toUpperCase()}
+                  {paged.map(u => {
+                    const roleInfo = ROLES.find(r => r.v === u.role) || ROLES[0];
+                    return (
+                      <tr key={u.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            {u.avatar ? <img src={u.avatar} className="w-8 h-8 rounded-full" alt="" /> : <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-xs font-bold">{u.name?.[0]?.toUpperCase()}</div>}
+                            <div>
+                              <p className="font-medium">{u.name}</p>
+                              {u.phone && <p className="text-xs" style={{color:"var(--text-muted)"}}>{u.phone}</p>}
+                            </div>
                           </div>
-                          <span className="font-medium">{u.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-slate-500">{u.email}</td>
-                      <td className="px-6 py-4 text-slate-500">{u.phone || "—"}</td>
-                      <td className="px-6 py-4 text-slate-500">{u.loyaltyPoints || 0}</td>
-                      <td className="px-6 py-4"><span className={roleBadge(u.role)}>{u.role}</span></td>
-                    </tr>
-                  ))}
-                  {paged.length === 0 && (
-                    <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-400">Không tìm thấy người dùng</td></tr>
-                  )}
+                        </td>
+                        <td className="px-4 py-3" style={{color:"var(--text-muted)"}}>{u.email}</td>
+                        <td className="px-4 py-3"><span className={roleInfo.color}>{roleInfo.l}</span></td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs">{u.loyaltyPoints || 0} pt</span>
+                          {u.loyaltyTier && <span className="badge-yellow ml-1">⭐ {u.loyaltyTier}</span>}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button onClick={() => openEdit(u)} className="text-emerald-600 hover:underline mr-3">✏️ Sửa</button>
+                          <button onClick={() => remove(u.id, u.name)} className="text-red-600 hover:underline">🗑️</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
             {totalPages > 1 && (
-              <div className="flex justify-between items-center mt-4">
-                <p className="text-sm text-slate-500">Trang {page} / {totalPages} • {filtered.length} kết quả</p>
+              <div className="flex items-center justify-between p-3 border-t border-slate-200 dark:border-slate-700">
+                <p className="text-xs" style={{color:"var(--text-muted)"}}>Hiển thị {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filtered.length)} / {filtered.length}</p>
                 <div className="flex gap-1">
-                  <button onClick={() => setPage(1)} disabled={page === 1} className="btn-secondary text-xs px-2 py-1">«</button>
-                  <button onClick={() => setPage(page - 1)} disabled={page === 1} className="btn-secondary text-xs px-3 py-1">‹ Trước</button>
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const p = Math.max(1, Math.min(totalPages - 4, page - 2)) + i;
-                    if (p > totalPages) return null;
-                    return (
-                      <button key={p} onClick={() => setPage(p)}
-                        className={`text-xs px-3 py-1 rounded-lg font-medium ${p === page ? "bg-emerald-500 text-white" : "bg-white border border-slate-200 hover:bg-slate-50"}`}>{p}</button>
-                    );
-                  })}
-                  <button onClick={() => setPage(page + 1)} disabled={page === totalPages} className="btn-secondary text-xs px-3 py-1">Sau ›</button>
-                  <button onClick={() => setPage(totalPages)} disabled={page === totalPages} className="btn-secondary text-xs px-2 py-1">»</button>
+                  <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 disabled:opacity-50">← Trước</button>
+                  <span className="px-3 py-1">{page} / {totalPages}</span>
+                  <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 disabled:opacity-50">Sau →</button>
                 </div>
               </div>
             )}
