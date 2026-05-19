@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const session = await prisma.chargingSession.findUnique({
     where: { id: params.id },
-    include: { slot: true, user: true }
+    include: { slot: { include: { station: true } }, user: { include: { fleet: true } } }
   });
   if (!session || session.userId !== u.id) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (session.status !== "ACTIVE") return NextResponse.json({ error: "Phiên đã kết thúc" }, { status: 400 });
@@ -27,18 +27,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const durationHours = durationMs / 3600000;
   const energyKwh = +(durationHours * session.slot.powerKw * 0.9).toFixed(3);
 
-  // Get tariff for current hour
   const hour = endTime.getHours();
   const tariff = await prisma.tariff.findFirst({
     where: { active: true, startHour: { lte: hour }, endHour: { gt: hour } },
     orderBy: { isPeak: "desc" }
   });
-  const ratePerKwh = tariff?.ratePerKwh || 2000;
-  const amount = +(energyKwh * ratePerKwh).toFixed(0);
+  const ratePerKwh = tariff?.ratePerKwh || 3210;
+  const subtotal = +(energyKwh * ratePerKwh).toFixed(0);
 
-  // Loyalty: 1 pt / 10k VND
+  // FLEET DISCOUNT - Xanh SM drivers get 15% off
+  const fleetDiscountRate = (session.user as any).fleet?.discountRate || 0;
+  const fleetDiscount = Math.round(subtotal * fleetDiscountRate / 100);
+  const amount = subtotal - fleetDiscount;
+
   const pointsEarned = Math.floor(amount / 10000);
-
   const invoiceNo = `EV${Date.now().toString(36).toUpperCase()}${Math.floor(Math.random() * 100)}`;
 
   const result = await prisma.$transaction(async (tx: any) => {
@@ -48,12 +50,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     await tx.slot.update({ where: { id: session.slotId }, data: { status: "AVAILABLE" } });
     const invoice = await tx.invoice.create({
       data: {
-        sessionId: session.id, userId: session.userId, energyKwh, subtotal: amount, amount,
+        sessionId: session.id, userId: session.userId, energyKwh,
+        subtotal, discount: fleetDiscount, amount,
         pointsEarned, invoiceNo
       }
     });
-
-    // Update loyalty
     if (pointsEarned > 0) {
       const newPoints = session.user.loyaltyPoints + pointsEarned;
       await tx.user.update({
@@ -67,14 +68,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return invoice;
   });
 
-  await notify(session.userId, "✓ Phiên sạc kết thúc", `${energyKwh} kWh • ${amount.toLocaleString("vi-VN")} ₫ • +${pointsEarned} điểm`, { type: "SUCCESS", link: "/invoices" });
+  const fleetMsg = fleetDiscount > 0 ? ` (Fleet -${fleetDiscountRate}%: -${fleetDiscount.toLocaleString("vi-VN")} ₫)` : "";
+  await notify(session.userId, "✓ Phiên sạc kết thúc", `${energyKwh} kWh • ${amount.toLocaleString("vi-VN")} ₫${fleetMsg} • +${pointsEarned} điểm`, { type: "SUCCESS", link: "/invoices" });
 
-  // Trigger webhooks
   fetch(`${req.nextUrl.origin}/api/webhooks/trigger`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ event: "session.end", payload: { sessionId: session.id, userId: session.userId, energyKwh, amount } })
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ event: "session.end", payload: { sessionId: session.id, userId: session.userId, energyKwh, amount, fleetDiscount } })
   }).catch(() => {});
 
-  return NextResponse.json({ session: { id: session.id, status: "COMPLETED" }, invoice: result, pointsEarned });
+  return NextResponse.json({ session: { id: session.id, status: "COMPLETED" }, invoice: result, pointsEarned, fleetDiscount });
 }

@@ -37,6 +37,9 @@ model User {
   payments         Payment[]
   voucherUsages    VoucherUsage[]
   pushSubscriptions PushSubscription[]
+  fleetId           String?
+  fleet             Fleet?  @relation(fields: [fleetId], references: [id])
+  vehicles          Vehicle[]
 }
 
 model Station {
@@ -52,6 +55,8 @@ model Station {
   phone     String?
   rating    Float    @default(0)
   reviewCount Int    @default(0)
+  brand     String?  @default("V-GREEN")
+  isPremium Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -347,4 +352,40 @@ model ApiKey {
   rateLimit Int      @default(1000)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Fleet {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  contact     String?
+  phone       String?
+  email       String?
+  vehicleCount Int     @default(0)
+  walletShared Boolean @default(true)
+  discountRate Float   @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  drivers User[]
+  vehicles Vehicle[]
+}
+
+model Vehicle {
+  id           String   @id @default(cuid())
+  userId       String
+  fleetId      String?
+  brand        String
+  model        String
+  licensePlate String   @unique
+  connectorType String
+  batteryKwh   Float?
+  vinNumber    String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id])
+  fleet Fleet? @relation(fields: [fleetId], references: [id])
 }
