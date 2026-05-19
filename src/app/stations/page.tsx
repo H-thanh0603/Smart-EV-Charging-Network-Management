@@ -14,6 +14,9 @@ export default function StationsPage() {
   const [connector, setConnector] = useState("ALL");
   const [power, setPower] = useState("ALL");
   const [brand, setBrand] = useState("ALL");
+  const [statusF, setStatusF] = useState("ALL");
+  const [sortBy, setSortBy] = useState("default");
+  const [amenityF, setAmenityF] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
   const [locError, setLocError] = useState("");
@@ -68,6 +71,11 @@ export default function StationsPage() {
       if (connector !== "ALL" && !s.slots.some((sl: any) => sl.connectorType === connector)) return false;
       if (power !== "ALL" && !s.slots.some((sl: any) => sl.powerKw === parseFloat(power))) return false;
       if (brand !== "ALL" && s.brand !== brand) return false;
+      if (statusF !== "ALL" && s.status !== statusF) return false;
+      if (amenityF.length > 0) {
+        const stationAm = (s.amenities || "").split(",");
+        if (!amenityF.every(a => stationAm.includes(a))) return false;
+      }
       return true;
     });
     if (view === "near" && userLoc) {
@@ -76,8 +84,13 @@ export default function StationsPage() {
         .map(s => ({ ...s, distance: haversine(userLoc.lat, userLoc.lng, s.lat, s.lng) }))
         .sort((a, b) => a.distance - b.distance);
     }
+    if (sortBy === "rating") list = [...list].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    else if (sortBy === "available") list = [...list].sort((a, b) => (b.available || 0) - (a.available || 0));
+    else if (sortBy === "distance" && userLoc) {
+      list = list.filter(s => s.lat && s.lng).map(s => ({ ...s, distance: s.distance ?? haversine(userLoc.lat, userLoc.lng, s.lat, s.lng) })).sort((a, b) => a.distance - b.distance);
+    }
     return list;
-  }, [stations, search, district, connector, power, brand, view, userLoc]);
+  }, [stations, search, district, connector, power, brand, statusF, amenityF, sortBy, view, userLoc]);
 
   return (
     <AppShell title="Trạm sạc">
@@ -116,6 +129,18 @@ export default function StationsPage() {
               <option value="V-GREEN">⚡ V-GREEN (VinFast)</option>
               <option value="ChargePlus">🔌 ChargePlus</option>
               <option value="EVOne">🌿 EVOne</option>
+            </select>
+            <select value={statusF} onChange={e => setStatusF(e.target.value)} className="input">
+              <option value="ALL">🟢 Mọi trạng thái</option>
+              <option value="FREE">🟢 Còn trống</option>
+              <option value="BUSY">🟡 Đông</option>
+              <option value="FULL">🔴 Đầy / Đang sửa</option>
+            </select>
+            <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="input">
+              <option value="default">📌 Mặc định</option>
+              <option value="rating">⭐ Đánh giá cao nhất</option>
+              <option value="available">🟢 Nhiều trụ trống</option>
+              <option value="distance">📍 Gần nhất</option>
             </select>
             <select value={power} onChange={e => setPower(e.target.value)} className="input">
               <option value="ALL">⚡ Tất cả công suất</option>

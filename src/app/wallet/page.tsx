@@ -5,10 +5,17 @@ import AppShell from "@/components/AppShell";
 
 const TOPUP_AMOUNTS = [50000, 100000, 200000, 500000, 1000000, 2000000];
 const BANKS = [
-  { code: "VNPAYQR", label: "Quét QR (mọi ngân hàng)", icon: "📱" },
-  { code: "VNBANK", label: "Thẻ ATM nội địa", icon: "💳" },
-  { code: "INTCARD", label: "Thẻ Visa/Master/JCB", icon: "🌐" },
+  { code: "VPBANK", label: "VP Bank", icon: "🏦", desc: "Chuyển khoản từ VP Bank" },
+  { code: "VNPAYQR", label: "Quét QR (mọi ngân hàng)", icon: "📱", desc: "Quét QR bằng app ngân hàng" },
+  { code: "VNBANK", label: "Thẻ ATM nội địa", icon: "💳", desc: "Vietcombank, BIDV, Techcombank..." },
+  { code: "INTCARD", label: "Thẻ Visa/Master/JCB", icon: "🌐", desc: "Thẻ tín dụng quốc tế" },
 ];
+
+const RECEIVER = {
+  bank: "VP Bank",
+  accountNo: "0368600557",
+  accountName: "NGUYEN HUU THANH",
+};
 
 function WalletContent() {
   const router = useRouter();
@@ -106,42 +113,88 @@ function WalletContent() {
       {showTopup && (
         <div className="card p-6 mb-6 animate-fadeIn">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-2xl">🏦</div>
+            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-2xl">🏦</div>
             <div>
-              <h3 className="font-semibold text-slate-800">Nạp tiền qua VNPay</h3>
-              <p className="text-xs text-slate-500">Cổng thanh toán VNPay (Sandbox)</p>
+              <h3 className="font-semibold">Nạp tiền vào ví</h3>
+              <p className="text-xs" style={{color:"var(--text-muted)"}}>Chuyển khoản hoặc qua cổng VNPay</p>
             </div>
           </div>
 
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Chọn số tiền</p>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{color:"var(--text-muted)"}}>Chọn số tiền</p>
           <div className="grid grid-cols-3 gap-2 mb-4">
             {TOPUP_AMOUNTS.map(v => (
               <button key={v} onClick={() => setAmount(v.toString())}
-                className={`p-3 rounded-lg border-2 transition text-sm font-medium ${amount === v.toString() ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-slate-200 hover:border-slate-300"}`}>
+                className={`p-3 rounded-lg border-2 transition text-sm font-medium ${amount === v.toString() ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300" : "border-slate-200 dark:border-slate-700 hover:border-slate-300"}`}>
                 {(v / 1000).toFixed(0)}k ₫
               </button>
             ))}
           </div>
           <input type="number" placeholder="Hoặc nhập số tiền (tối thiểu 10,000)" value={amount} onChange={e => setAmount(e.target.value)} className="input mb-4" />
 
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Phương thức thanh toán</p>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{color:"var(--text-muted)"}}>Phương thức thanh toán</p>
           <div className="space-y-2 mb-4">
             {BANKS.map(b => (
-              <label key={b.code} className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition ${bank === b.code ? "border-emerald-500 bg-emerald-50" : "border-slate-200 hover:border-slate-300"}`}>
-                <input type="radio" checked={bank === b.code} onChange={() => setBank(b.code)} />
+              <label key={b.code} className={`flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition ${bank === b.code ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30" : "border-slate-200 dark:border-slate-700 hover:border-slate-300"}`}>
+                <input type="radio" checked={bank === b.code} onChange={() => setBank(b.code)} className="mt-1" />
                 <span className="text-2xl">{b.icon}</span>
-                <span className="text-sm font-medium">{b.label}</span>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">{b.label}</p>
+                  <p className="text-xs" style={{color:"var(--text-muted)"}}>{b.desc}</p>
+                </div>
               </label>
             ))}
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg text-xs text-amber-800 mb-4">
-            ℹ️ <strong>Sandbox:</strong> Dùng thẻ test VNPay để thanh toán giả lập. Số thẻ: <code className="bg-white px-1">9704198526191432198</code>, OTP: <code className="bg-white px-1">123456</code>.
-          </div>
+          {bank === "VPBANK" && amount && parseFloat(amount) >= 10000 && (
+            <div className="mb-4 p-5 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-2 border-emerald-300 dark:border-emerald-700">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center text-white text-2xl shadow-lg">🏦</div>
+                <div className="flex-1">
+                  <p className="font-bold text-emerald-700 dark:text-emerald-300">Chuyển khoản đến tài khoản:</p>
+                  <p className="text-xs" style={{color:"var(--text-muted)"}}>Mở app ngân hàng quét QR hoặc nhập thủ công</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                <div className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                  <p className="text-xs uppercase tracking-wider mb-1" style={{color:"var(--text-muted)"}}>Ngân hàng</p>
+                  <p className="font-bold text-lg">{RECEIVER.bank}</p>
+                </div>
+                <div className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                  <p className="text-xs uppercase tracking-wider mb-1" style={{color:"var(--text-muted)"}}>Số tài khoản</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-lg font-mono">{RECEIVER.accountNo}</p>
+                    <button onClick={() => { navigator.clipboard.writeText(RECEIVER.accountNo); alert("Đã copy số TK"); }} className="text-xs text-emerald-600 hover:underline">📋 Copy</button>
+                  </div>
+                </div>
+                <div className="sm:col-span-2 bg-white dark:bg-slate-900 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                  <p className="text-xs uppercase tracking-wider mb-1" style={{color:"var(--text-muted)"}}>Chủ tài khoản</p>
+                  <p className="font-bold text-lg">{RECEIVER.accountName}</p>
+                </div>
+                <div className="sm:col-span-2 bg-white dark:bg-slate-900 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                  <p className="text-xs uppercase tracking-wider mb-1" style={{color:"var(--text-muted)"}}>Số tiền</p>
+                  <p className="font-bold text-2xl text-emerald-600">{Number(amount).toLocaleString("vi-VN")} ₫</p>
+                </div>
+                <div className="sm:col-span-2 bg-white dark:bg-slate-900 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                  <p className="text-xs uppercase tracking-wider mb-1" style={{color:"var(--text-muted)"}}>Nội dung chuyển khoản</p>
+                  <p className="font-bold font-mono text-emerald-600">NAP {wallet?.id?.slice(-6).toUpperCase() || "USER"}</p>
+                </div>
+              </div>
+              <div className="flex justify-center mb-2">
+                <img src={`https://img.vietqr.io/image/VPB-${RECEIVER.accountNo}-compact2.png?amount=${amount}&addInfo=NAP%20${(wallet?.id||"USER").slice(-6).toUpperCase()}&accountName=${encodeURIComponent(RECEIVER.accountName)}`} alt="QR" className="w-64 rounded-xl shadow-lg bg-white p-2" />
+              </div>
+              <p className="text-center text-xs" style={{color:"var(--text-muted)"}}>Mở app ngân hàng → Quét QR → Tự động điền số tiền + nội dung</p>
+            </div>
+          )}
+
+          {bank !== "VPBANK" && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 rounded-lg text-xs text-amber-800 dark:text-amber-200 mb-4">
+              ℹ️ <strong>Sandbox VNPay:</strong> Số thẻ: <code className="bg-white dark:bg-slate-900 px-1 rounded">9704198526191432198</code>, OTP: <code className="bg-white dark:bg-slate-900 px-1 rounded">123456</code>.
+            </div>
+          )}
 
           <div className="flex gap-2">
             <button onClick={topupVNPay} disabled={!amount || parseFloat(amount) < 10000 || processing} className="btn-primary flex-1">
-              {processing ? "Đang chuyển hướng..." : `Thanh toán ${amount ? Number(amount).toLocaleString("vi-VN") + " ₫" : ""}`}
+              {processing ? "Đang chuyển hướng..." : bank === "VPBANK" ? `Tôi đã chuyển khoản ${amount ? Number(amount).toLocaleString("vi-VN") + " ₫" : ""}` : `Thanh toán ${amount ? Number(amount).toLocaleString("vi-VN") + " ₫" : ""}`}
             </button>
             <button onClick={() => setShowTopup(false)} className="btn-secondary">Huỷ</button>
           </div>
