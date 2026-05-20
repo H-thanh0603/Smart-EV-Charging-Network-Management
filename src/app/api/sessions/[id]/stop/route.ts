@@ -44,7 +44,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const invoiceNo = `EV${Date.now().toString(36).toUpperCase()}${Math.floor(Math.random() * 100)}`;
 
   const result = await prisma.$transaction(async (tx: any) => {
-    await tx.chargingSession.update({
+    await tx.session.update({
       where: { id: session.id }, data: { status: "COMPLETED", endTime, energyKwh }
     });
     await tx.slot.update({ where: { id: session.slotId }, data: { status: "AVAILABLE" } });

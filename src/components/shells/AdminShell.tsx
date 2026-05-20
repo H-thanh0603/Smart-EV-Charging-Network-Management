@@ -7,11 +7,16 @@ const adminNav = [
   { href: "/admin", label: "Dashboard", icon: "📊", group: "main" },
   { href: "/admin/stations", label: "Trạm sạc", icon: "🏢", group: "main" },
   { href: "/admin/users", label: "Người dùng", icon: "👥", group: "main" },
+  { href: "/admin/fleets", label: "Đội xe (Fleet)", icon: "🚗", group: "main" },
   { href: "/admin/maintenance", label: "Bảo trì", icon: "🔧", group: "ops" },
   { href: "/admin/tariffs", label: "Giá điện", icon: "💡", group: "ops" },
+  { href: "/admin/reviews", label: "Đánh giá", icon: "⭐", group: "ops" },
   { href: "/admin/vouchers", label: "Voucher", icon: "🎟️", group: "biz" },
+  { href: "/admin/loyalty", label: "Loyalty", icon: "🏆", group: "biz" },
+  { href: "/admin/payments", label: "Thanh toán", icon: "💳", group: "biz" },
   { href: "/admin/revenue", label: "Doanh thu", icon: "💰", group: "biz" },
-  { href: "/admin/webhooks", label: "API & Webhook", icon: "🔌", group: "tech" },
+  { href: "/admin/webhooks", label: "Webhook", icon: "🔌", group: "tech" },
+  { href: "/admin/apikeys", label: "API Keys", icon: "🔑", group: "tech" },
 ];
 
 const groups = { main: "Chính", ops: "Vận hành", biz: "Kinh doanh", tech: "Tích hợp" };

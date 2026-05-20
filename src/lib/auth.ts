@@ -18,14 +18,25 @@ export function verifyToken(token: string) {
 }
 
 export function getTokenFromRequest(req: Request) {
-  // Try Authorization header
   const auth = req.headers.get("authorization");
   if (auth?.startsWith("Bearer ")) return auth.slice(7);
-  // Try cookie
   const cookie = req.headers.get("cookie");
   if (cookie) {
     const match = cookie.match(/(?:^|;\s*)ev_token=([^;]+)/);
     if (match) return match[1];
   }
   return null;
+}
+
+export async function requireUser(req: Request) {
+  const token = getTokenFromRequest(req);
+  if (!token) return null;
+  return verifyToken(token);
+}
+
+export async function requireRole(req: Request, roles: string[]) {
+  const user = await requireUser(req);
+  if (!user) return null;
+  if (!roles.includes(user.role)) return null;
+  return user;
 }
