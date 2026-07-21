@@ -6,6 +6,7 @@ import Link from "next/link";
 const adminNav = [
   { href: "/admin", label: "Dashboard", icon: "📊", group: "main" },
   { href: "/admin/stations", label: "Trạm sạc", icon: "🏢", group: "main" },
+  { href: "/admin/live", label: "Giám sát realtime", icon: "📡", group: "main" },
   { href: "/admin/users", label: "Người dùng", icon: "👥", group: "main" },
   { href: "/admin/fleets", label: "Đội xe (Fleet)", icon: "🚗", group: "main" },
   { href: "/admin/maintenance", label: "Bảo trì", icon: "🔧", group: "ops" },

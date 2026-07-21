@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken, getTokenFromRequest } from "@/lib/auth";
+import { parseBody, walletTopupSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   const token = getTokenFromRequest(req);
   const user = token ? verifyToken(token) : null;
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { amount } = await req.json();
-  if (!amount || amount <= 0) return NextResponse.json({ error: "Số tiền không hợp lệ" }, { status: 400 });
+  const parsed = await parseBody(req, walletTopupSchema);
+  if (!parsed.ok) return parsed.response;
+  const { amount } = parsed.data;
 
   let wallet = await prisma.wallet.findUnique({ where: { userId: user.id } });
   if (!wallet) wallet = await prisma.wallet.create({ data: { userId: user.id, balance: 0 } });

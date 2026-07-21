@@ -98,3 +98,31 @@ src/
     ├── sw.js                        # Service Worker
     └── manifest.json                # PWA manifest
 ```
+
+
+## Nâng cấp mới (Realtime + OCPP)
+
+### Giám sát realtime (SSE)
+- Trang `/admin/live` — dashboard trạng thái trụ sạc realtime qua Server-Sent Events (`/api/stations/live/stream`), thay cho polling. Client mở 1 kết nối `EventSource`, server đẩy dữ liệu khi trạng thái slot thay đổi.
+
+### Biểu đồ doanh thu (Chart.js)
+- Trang `/admin/revenue` — biểu đồ kết hợp cột doanh thu (₫) + đường năng lượng (kWh) hai trục, dùng `chart.js` + `react-chartjs-2`.
+
+### OCPP 1.6-J thật (WebSocket)
+Central System (CSMS) + charge point simulator nói giao thức OCPP 1.6 JSON qua WebSocket. Năng lượng đo từ `MeterValues` chảy vào đúng pipeline tính cước + tích điểm loyalty của app.
+
+```bash
+# 1) Chạy Central System (cổng mặc định 9220)
+npm run ocpp:server
+
+# 2) Ở terminal khác, chạy trụ sạc mô phỏng (tự lấy 1 station + 1 khách hàng từ DB)
+npm run ocpp:sim
+
+# Hoặc chỉ định station + idTag (email/userId):
+npm run ocpp:sim -- "<stationId>" "customer@evcharge.com"
+```
+
+Luồng mô phỏng: `BootNotification → StatusNotification → StartTransaction → MeterValues×N → StopTransaction`. Sau khi chạy, kiểm tra hóa đơn mới + điểm loyalty của user tăng, và `/admin/live` phản ánh trạng thái trụ theo thời gian thực.
+
+- URL trụ kết nối: `ws://localhost:9220/ocpp/{stationId}` (subprotocol `ocpp1.6`).
+- Cấu hình cổng: `OCPP_PORT` trong `.env`.

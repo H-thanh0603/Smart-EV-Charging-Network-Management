@@ -1,17 +1,25 @@
 import jwt from "jsonwebtoken";
 
 const SECRET = process.env.JWT_SECRET;
-if (!SECRET) {
-  console.error("FATAL: JWT_SECRET not set in .env");
+
+// Fail fast: không cho phép fallback secret cố định (dễ bị giả mạo token).
+// Nếu thiếu JWT_SECRET, throw ngay khi ký/verify thay vì âm thầm dùng secret yếu.
+function getSecret(): string {
+  if (!SECRET || SECRET.length < 16) {
+    throw new Error(
+      "JWT_SECRET chưa được cấu hình (hoặc quá ngắn). Hãy set JWT_SECRET trong .env (>= 16 ký tự)."
+    );
+  }
+  return SECRET;
 }
 
 export function signToken(payload: { id: string; email: string; role: string }) {
-  return jwt.sign(payload, SECRET || "fallback-dev-only", { expiresIn: "7d" });
+  return jwt.sign(payload, getSecret(), { expiresIn: "7d" });
 }
 
 export function verifyToken(token: string) {
   try {
-    return jwt.verify(token, SECRET || "fallback-dev-only") as { id: string; email: string; role: string };
+    return jwt.verify(token, getSecret()) as { id: string; email: string; role: string };
   } catch {
     return null;
   }

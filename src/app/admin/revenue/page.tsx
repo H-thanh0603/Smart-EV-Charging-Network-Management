@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
+import RevenueChart from "@/components/RevenueChart";
 
 export default function AdminRevenuePage() {
   const [period, setPeriod] = useState<"day" | "week" | "month">("day");
@@ -18,8 +19,6 @@ export default function AdminRevenuePage() {
   }
 
   useEffect(() => { load(period); }, [period]);
-
-  const maxRevenue = Math.max(...data.map(d => d.revenue), 1);
 
   return (
     <AppShell title="Báo cáo doanh thu">
@@ -50,23 +49,11 @@ export default function AdminRevenuePage() {
         </div>
 
         <div className="card p-6">
-          <h3 className="font-semibold text-slate-800 mb-4">Biểu đồ doanh thu theo {period === "day" ? "ngày" : period === "week" ? "tuần" : "tháng"}</h3>
+          <h3 className="font-semibold text-slate-800 mb-4">Biểu đồ doanh thu &amp; năng lượng theo {period === "day" ? "ngày" : period === "week" ? "tuần" : "tháng"}</h3>
           {loading ? <div className="skeleton h-48"></div> : data.length === 0 ? (
             <p className="text-center py-8 text-slate-400 text-sm">Chưa có dữ liệu</p>
           ) : (
-            <div className="space-y-3">
-              {data.map(d => (
-                <div key={d.date}>
-                  <div className="flex justify-between text-sm mb-1.5">
-                    <span className="font-medium text-slate-700">{d.date}</span>
-                    <span className="text-slate-600">{d.revenue.toLocaleString("vi-VN")} ₫ • {d.count} phiên • {d.energy.toFixed(1)} kWh</span>
-                  </div>
-                  <div className="bg-slate-100 rounded-full h-3 overflow-hidden">
-                    <div className="bg-gradient-to-r from-blue-400 to-cyan-500 h-full transition-all duration-500" style={{ width: `${(d.revenue / maxRevenue) * 100}%` }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <RevenueChart data={data} />
           )}
         </div>
       </div>

@@ -54,3 +54,15 @@ test.txt
 # Env (already there but make explicit)
 .env
 .env.local
+
+
+# Runtime / dev logs
+*.log
+dev-server*.log
+
+# CodeGraph tool artifacts
+/.codegraph
+
+# Python cache (diagram generator scripts)
+__pycache__/
+*.pyc
