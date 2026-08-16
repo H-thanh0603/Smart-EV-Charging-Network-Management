@@ -82,8 +82,13 @@ export function verifyVNPayReturn(query: Record<string, string>): {
   const signData = Object.entries(sorted).map(([k, v]) => `${k}=${v}`).join("&");
   const expected = crypto.createHmac("sha512", secret).update(signData).digest("hex");
 
+  // Constant-time compare chống timing attack
+  const a = Buffer.from(expected, "hex");
+  const b = Buffer.from(vnp_SecureHash || "", "hex");
+  const valid = a.length === b.length && crypto.timingSafeEqual(a, b);
+
   return {
-    valid: expected === vnp_SecureHash,
+    valid,
     status: rest.vnp_ResponseCode === "00" ? "success" : "failed",
     txnRef: rest.vnp_TxnRef,
     amount: parseInt(rest.vnp_Amount || "0") / 100,

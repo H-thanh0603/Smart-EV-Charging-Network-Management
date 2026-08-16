@@ -1,9 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "./prisma";
 import crypto from "crypto";
 
-export async function POST(req: NextRequest) {
-  const { event, data } = await req.json();
+/**
+ * Bắn webhook cho các đối tác đăng ký event. Gọi trực tiếp trong server code
+ * (không còn HTTP endpoint /api/webhooks/trigger — endpoint cũ không auth, đã gỡ).
+ * ponytail: fire-and-forget inline; queue + retry (BullMQ) khi cần delivery đảm bảo.
+ */
+export async function triggerWebhooks(event: string, data: unknown): Promise<number> {
   const webhooks = await prisma.webhook.findMany({ where: { active: true } });
   const matching = webhooks.filter(w => w.events.split(",").map(e => e.trim()).includes(event));
 
@@ -30,5 +33,5 @@ export async function POST(req: NextRequest) {
       await prisma.webhook.update({ where: { id: wh.id }, data: { failureCount: wh.failureCount + 1 } });
     }
   }
-  return NextResponse.json({ triggered: matching.length });
+  return matching.length;
 }

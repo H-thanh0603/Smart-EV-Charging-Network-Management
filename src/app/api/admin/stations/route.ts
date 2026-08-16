@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   const station = await prisma.station.create({
     data: {
-      id: name,
+      // id tự sinh cuid — không dùng tên làm ID (trùng tên crash, đổi tên gãy FK)
       name, address, city, district: district || null,
       lat: coord(lat),
       lng: coord(lng),

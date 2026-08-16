@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyToken, getTokenFromRequest } from "@/lib/auth";
 import { notify } from "@/lib/notify";
 import { finalizeSession } from "@/lib/session";
+import { triggerWebhooks } from "@/lib/webhook";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const token = getTokenFromRequest(req);
@@ -39,13 +40,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     { type: "SUCCESS", link: "/invoices" }
   );
 
-  fetch(`${req.nextUrl.origin}/api/webhooks/trigger`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      event: "session.end",
-      payload: { sessionId: result.session.id, userId: result.userId, energyKwh, amount, fleetDiscount },
-    }),
+  triggerWebhooks("session.end", {
+    sessionId: result.session.id, userId: result.userId, energyKwh, amount, fleetDiscount,
   }).catch(() => {});
 
   return NextResponse.json({

@@ -62,6 +62,22 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   try {
     await prisma.$transaction(async (tx) => {
+      // Claim 1 lần: 2 request pay song song chỉ 1 trừ ví được (chống double-pay)
+      const claimed = await tx.invoice.updateMany({
+        where: { id: invoice.id, status: "UNPAID" },
+        data: {
+          status: "PAID",
+          paidAt: new Date(),
+          paymentMethod: "WALLET",
+          subtotal: invoice.amount,
+          discount,
+          voucherCode: appliedVoucher?.code,
+          pointsRedeemed,
+          amount: finalAmount,
+        },
+      });
+      if (claimed.count === 0) throw new Error("ALREADY_PAID");
+
       const freshWallet = await tx.wallet.findUnique({ where: { userId: u.id } });
       if (!freshWallet || freshWallet.balance < finalAmount) throw new Error("INSUFFICIENT_BALANCE");
       const newBalance = freshWallet.balance - finalAmount;
@@ -73,19 +89,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
           amount: -finalAmount,
           balance: newBalance,
           note: `Thanh toán hoá đơn ${invoice.invoiceNo || invoice.id.slice(-6)}`,
-        },
-      });
-      await tx.invoice.update({
-        where: { id: invoice.id },
-        data: {
-          status: "PAID",
-          paidAt: new Date(),
-          paymentMethod: "WALLET",
-          subtotal: invoice.amount,
-          discount,
-          voucherCode: appliedVoucher?.code,
-          pointsRedeemed,
-          amount: finalAmount,
         },
       });
       if (appliedVoucher) {
@@ -121,6 +124,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       }
     });
   } catch (e: any) {
+    if (e?.message === "ALREADY_PAID")
+      return NextResponse.json({ error: "Đã thanh toán" }, { status: 400 });
     if (e?.message === "INSUFFICIENT_POINTS")
       return NextResponse.json({ error: "Không đủ điểm để quy đổi" }, { status: 400 });
     if (e?.message === "VOUCHER_LIMIT")

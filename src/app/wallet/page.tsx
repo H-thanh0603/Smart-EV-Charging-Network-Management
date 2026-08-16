@@ -52,10 +52,10 @@ function WalletContent() {
     }
     setProcessing(true);
     const token = localStorage.getItem("token");
-    const res = await fetch("/api/payments/vnpay/create", {
+    const res = await fetch("/api/wallet/topup", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ amount: parseFloat(amount), bankCode: bank })
+      body: JSON.stringify({ amount: Math.round(parseFloat(amount)), bankCode: bank })
     });
     const d = await res.json();
     if (!res.ok) { toast(d.error, "error"); setProcessing(false); return; }

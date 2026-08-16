@@ -74,10 +74,12 @@ export async function finalizeSession(
   const invoiceNo = `EV${Date.now().toString(36).toUpperCase()}${Math.floor(Math.random() * 100)}`;
 
   const invoice = await prisma.$transaction(async (tx) => {
-    await tx.chargingSession.update({
-      where: { id: session.id },
+    // Claim 1 lần: 2 request stop song song chỉ 1 finalize được (chống double invoice)
+    const claimed = await tx.chargingSession.updateMany({
+      where: { id: session.id, status: "ACTIVE" },
       data: { status: "COMPLETED", endTime, energyKwh },
     });
+    if (claimed.count === 0) throw new Error("SESSION_NOT_ACTIVE");
     await tx.slot.update({ where: { id: session.slotId }, data: { status: "AVAILABLE" } });
     if (session.reservationId) {
       await tx.reservation.update({
