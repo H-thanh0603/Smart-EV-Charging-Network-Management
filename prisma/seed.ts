@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 import bcrypt from "bcryptjs";
 
-const adapter = new PrismaLibSql({ url: "file:D:/ev-charging/prisma/dev.db" });
+const adapter = new PrismaLibSql({ url: process.env.DATABASE_URL ?? "file:./prisma/dev.db" });
 const prisma = new PrismaClient({ adapter } as any);
 
 async function main() {
