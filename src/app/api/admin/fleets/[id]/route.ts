@@ -11,6 +11,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   ["name","contact","phone","email","discountRate","walletShared","active"].forEach((k) => {
     if (k in body) data[k] = body[k];
   });
+  if ("discountRate" in body) data.discountRate = Math.max(0, Math.min(100, Number(body.discountRate) || 0));
   const fleet = await prisma.fleet.update({ where: { id: params.id }, data });
   return NextResponse.json(fleet);
 }

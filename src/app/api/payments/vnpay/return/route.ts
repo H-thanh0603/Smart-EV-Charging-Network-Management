@@ -15,15 +15,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL(`/wallet?status=notfound`, req.url));
   }
 
+  // M9: kiểm tra amount khớp như IPN
+  if (payment.amount * 100 !== parseInt(String(params.vnp_Amount || "0"))) {
+    return NextResponse.redirect(new URL(`/wallet?status=amount_mismatch`, req.url));
+  }
+
   if (payment.status === "SUCCESS") {
     return NextResponse.redirect(new URL(`/wallet?status=already_paid`, req.url));
   }
 
   if (result.status === "success") {
-    // Atomic: update payment + wallet + transaction in one go
-    await prisma.$transaction(async (tx: any) => {
-      await tx.payment.update({
-        where: { id: payment.id },
+    const credited = await prisma.$transaction(async (tx: any) => {
+      // M10: claim 1 lần — chỉ PENDING → SUCCESS; IPN/return chạy song song chỉ 1 cộng tiền
+      const claimed = await tx.payment.updateMany({
+        where: { id: payment.id, status: "PENDING" },
         data: {
           status: "SUCCESS",
           responseCode: result.responseCode,
@@ -32,6 +37,7 @@ export async function GET(req: NextRequest) {
           paidAt: new Date(),
         }
       });
+      if (claimed.count === 0) return false;
 
       let wallet = await tx.wallet.findUnique({ where: { userId: payment.userId } });
       if (!wallet) wallet = await tx.wallet.create({ data: { userId: payment.userId, balance: 0 } });
@@ -56,7 +62,9 @@ export async function GET(req: NextRequest) {
           link: "/wallet"
         }
       });
+      return true;
     });
+    if (!credited) return NextResponse.redirect(new URL(`/wallet?status=already_paid`, req.url));
     return NextResponse.redirect(new URL(`/wallet?status=success&amount=${payment.amount}&txn=${result.txnRef}`, req.url));
   } else {
     await prisma.payment.update({

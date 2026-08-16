@@ -22,6 +22,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { name, code, contact, phone, email, discountRate, walletShared, active } = body;
   if (!name || !code) return NextResponse.json({ error: "Missing name or code" }, { status: 400 });
+  // discountRate ngoài 0-100 => âm hóa đơn/points âm; clamp
+  const rate = Math.max(0, Math.min(100, Number(discountRate) || 0));
 
   try {
     const fleet = await prisma.fleet.create({
@@ -31,7 +33,7 @@ export async function POST(req: NextRequest) {
         contact: contact || null,
         phone: phone || null,
         email: email || null,
-        discountRate: discountRate ?? 0,
+        discountRate: rate,
         walletShared: walletShared ?? true,
         active: active ?? true,
       },

@@ -15,6 +15,8 @@ import { WebSocket } from "ws";
 import { prisma } from "../src/lib/prisma";
 
 const PORT = Number(process.env.OCPP_PORT || 9220);
+const SECRET = process.env.OCPP_SECRET;
+if (!SECRET) throw new Error("OCPP_SECRET chưa cấu hình trong .env (phải khớp với ocpp-server).");
 
 function randId() {
   return Math.random().toString(36).slice(2, 10);
@@ -48,7 +50,7 @@ async function run() {
   console.log(`🔌 Simulator kết nối ${wsUrl}`);
   console.log(`   Station: ${station.name} | idTag: ${idTag}`);
 
-  const ws = new WebSocket(wsUrl, ["ocpp1.6"]);
+  const ws = new WebSocket(wsUrl, ["ocpp1.6"], { headers: { "x-ocpp-secret": SECRET } });
 
   // Correlate CALLRESULT theo uniqueId
   const pending = new Map<string, (payload: any) => void>();

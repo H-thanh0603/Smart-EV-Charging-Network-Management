@@ -9,6 +9,13 @@ async function checkAdmin(req: NextRequest) {
   return u;
 }
 
+// Chống NaN: parseFloat rác thường trả NaN rồi lưu vào Float? → 500
+function coord(v: unknown): number | null {
+  if (v === undefined || v === null || v === "") return null;
+  const n = parseFloat(String(v));
+  return Number.isFinite(n) ? n : null;
+}
+
 export async function POST(req: NextRequest) {
   const u = await checkAdmin(req);
   if (!u) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -23,8 +30,8 @@ export async function POST(req: NextRequest) {
     data: {
       id: name,
       name, address, city, district: district || null,
-      lat: lat ? parseFloat(lat) : null,
-      lng: lng ? parseFloat(lng) : null,
+      lat: coord(lat),
+      lng: coord(lng),
       brand: brand || "V-GREEN",
       isPremium: !!isPremium,
       openHours: openHours || "24/7",
@@ -50,8 +57,8 @@ export async function PUT(req: NextRequest) {
     where: { id },
     data: {
       name, address, city, district: district || null,
-      lat: lat ? parseFloat(lat) : null,
-      lng: lng ? parseFloat(lng) : null,
+      lat: coord(lat),
+      lng: coord(lng),
       brand: brand || "V-GREEN",
       isPremium: !!isPremium,
       openHours, phone: phone || null,

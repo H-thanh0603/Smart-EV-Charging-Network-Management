@@ -32,13 +32,18 @@ async function tick() {
 
   // 2. Nhắc 15 phút trước giờ sạc
   const upcoming = await prisma.reservation.findMany({
-    where: { status: "PENDING", startTime: { gte: new Date(now.getTime() + 14 * 60 * 1000), lte: new Date(now.getTime() + 15 * 60 * 1000) } },
+    where: {
+      status: "PENDING",
+      reminderSentAt: null,
+      startTime: { gte: new Date(now.getTime() + 14 * 60 * 1000), lte: new Date(now.getTime() + 15 * 60 * 1000) }
+    },
     include: { slot: { include: { station: true } } }
   });
   for (const r of upcoming) {
     await prisma.notification.create({
       data: { userId: r.userId, title: "⏰ Sắp đến giờ sạc", message: `Còn 15 phút trước giờ sạc tại ${r.slot.station.name}, trụ ${r.slot.slotNumber}`, type: "INFO", link: "/reservations" }
     });
+    await prisma.reservation.update({ where: { id: r.id }, data: { reminderSentAt: now } });
   }
 
   console.log(`[${now.toISOString()}] tick: cancelled ${expired.length}, reminded ${upcoming.length}`);

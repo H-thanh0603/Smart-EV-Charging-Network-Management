@@ -14,14 +14,18 @@ export async function POST(req: NextRequest) {
   const exp = new Date(Date.now() + 60 * 60 * 1000); // 1h
   await prisma.user.update({ where: { id: user.id }, data: { resetToken: token, resetTokenExp: exp } });
 
-  // In production: send email with link http://localhost:3000/reset-password?token=...
-  // For demo: return token directly so user can copy
+  // Tránh lộ token cho attacker: chỉ trả link trong dev. Production phải gửi email/SMS.
   const resetUrl = `${req.nextUrl.origin}/reset-password?token=${token}`;
-  console.log(`[Demo] Reset link for ${email}: ${resetUrl}`);
-
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[Reset] Link for ${email}: ${resetUrl}`);
+    return NextResponse.json({
+      success: true,
+      message: "Link đặt lại đã được gửi tới email (demo: hiện ngay tại đây).",
+      demoResetUrl: resetUrl
+    });
+  }
   return NextResponse.json({
     success: true,
-    message: "Link đặt lại đã được gửi tới email (demo: hiện ngay tại đây).",
-    demoResetUrl: resetUrl
+    message: "Nếu email tồn tại, link đặt lại mật khẩu đã được gửi tới email của bạn."
   });
 }

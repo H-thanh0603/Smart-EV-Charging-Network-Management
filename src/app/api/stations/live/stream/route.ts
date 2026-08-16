@@ -32,10 +32,13 @@ export async function GET(req: NextRequest) {
         if (closed) return;
         try {
           const stations = await getLiveStations();
-          // Hash gọn theo trạng thái slot để chỉ đẩy khi có thay đổi
+          // Hash theo slot-level + phiên active để chỉ đẩy khi thực sự thay đổi
           const hash = stations
-            .map((s) => `${s.id}:${s.available}/${s.occupied}/${s.maintenance}`)
-            .join("|");
+            .map((s) =>
+              `${s.id}:${s.slots.map((sl) => `${sl.id}=${sl.status}`).join(",")}` +
+              `|sess:${s.activeSessions.map((a) => `${a.slotNumber}=${a.remainingMin}`).join(",")}`
+            )
+            .join("||");
           if (hash !== lastHash) {
             lastHash = hash;
             send("stations", stations);
@@ -43,8 +46,11 @@ export async function GET(req: NextRequest) {
             // heartbeat giữ kết nối sống (comment line, không phải event)
             if (!closed) controller.enqueue(encoder.encode(`: ping\n\n`));
           }
-        } catch {
-          // bỏ qua lỗi tạm thời, lần tick sau thử lại
+        } catch (e: any) {
+          // Báo lỗi cho client thay vì giữ trạng thái "connected" sai lệch
+          if (!closed) {
+            controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ message: e?.message || "live error" })}\n\n`));
+          }
         }
       };
 

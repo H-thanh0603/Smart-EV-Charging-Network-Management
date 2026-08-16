@@ -8,7 +8,8 @@ export async function GET(req: NextRequest) {
   const user = token ? verifyToken(token) : null;
   if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const keys = await prisma.apiKey.findMany({ orderBy: { createdAt: "desc" } });
-  return NextResponse.json(keys);
+  // Không lộ key trong listing; chỉ trả khi vừa tạo
+  return NextResponse.json(keys.map(({ key, ...rest }) => rest));
 }
 
 export async function POST(req: NextRequest) {

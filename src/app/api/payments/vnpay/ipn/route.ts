@@ -20,9 +20,10 @@ export async function GET(req: NextRequest) {
   }
 
   if (result.status === "success") {
-    await prisma.$transaction(async (tx: any) => {
-      await tx.payment.update({
-        where: { id: payment.id },
+    const failed = await prisma.$transaction(async (tx: any) => {
+      // M10: claim 1 lần chống double-credit với /return
+      const claimed = await tx.payment.updateMany({
+        where: { id: payment.id, status: "PENDING" },
         data: {
           status: "SUCCESS",
           responseCode: result.responseCode,
@@ -31,6 +32,7 @@ export async function GET(req: NextRequest) {
           paidAt: new Date(),
         }
       });
+      if (claimed.count === 0) return true;
       let wallet = await tx.wallet.findUnique({ where: { userId: payment.userId } });
       if (!wallet) wallet = await tx.wallet.create({ data: { userId: payment.userId, balance: 0 } });
       const newBalance = wallet.balance + payment.amount;
@@ -38,7 +40,9 @@ export async function GET(req: NextRequest) {
       await tx.walletTransaction.create({
         data: { userId: payment.userId, type: "TOPUP", amount: payment.amount, balance: newBalance, note: `Nạp qua VNPay (IPN)`, paymentId: payment.id }
       });
+      return false;
     });
+    if (failed) return NextResponse.json({ RspCode: "02", Message: "Already updated" });
   } else {
     await prisma.payment.update({ where: { id: payment.id }, data: { status: "FAILED", responseCode: result.responseCode } });
   }

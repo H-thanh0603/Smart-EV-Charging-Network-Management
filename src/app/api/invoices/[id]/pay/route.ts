@@ -62,7 +62,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   try {
     await prisma.$transaction(async (tx) => {
-      const newBalance = wallet.balance - finalAmount;
+      const freshWallet = await tx.wallet.findUnique({ where: { userId: u.id } });
+      if (!freshWallet || freshWallet.balance < finalAmount) throw new Error("INSUFFICIENT_BALANCE");
+      const newBalance = freshWallet.balance - finalAmount;
       await tx.wallet.update({ where: { userId: u.id }, data: { balance: newBalance } });
       await tx.walletTransaction.create({
         data: {
@@ -87,7 +89,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         },
       });
       if (appliedVoucher) {
-        await tx.voucher.update({ where: { id: appliedVoucher.id }, data: { usedCount: { increment: 1 } } });
+        // Chống double-submit: chỉ tăng usedCount khi chưa đụng usageLimit
+        if (appliedVoucher.usageLimit) {
+          const bumped = await tx.voucher.updateMany({
+            where: { id: appliedVoucher.id, usedCount: { lt: appliedVoucher.usageLimit } },
+            data: { usedCount: { increment: 1 } }
+          });
+          if (bumped.count === 0) throw new Error("VOUCHER_LIMIT");
+        } else {
+          await tx.voucher.update({ where: { id: appliedVoucher.id }, data: { usedCount: { increment: 1 } } });
+        }
         await tx.voucherUsage.create({
           data: { voucherId: appliedVoucher.id, userId: u.id, invoiceId: invoice.id, discount: appliedVoucher ? discount - pointDiscount : 0 },
         });
@@ -112,6 +123,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   } catch (e: any) {
     if (e?.message === "INSUFFICIENT_POINTS")
       return NextResponse.json({ error: "Không đủ điểm để quy đổi" }, { status: 400 });
+    if (e?.message === "VOUCHER_LIMIT")
+      return NextResponse.json({ error: "Mã đã hết lượt sử dụng" }, { status: 400 });
+    if (e?.message === "INSUFFICIENT_BALANCE")
+      return NextResponse.json({ error: "Số dư ví không đủ" }, { status: 400 });
     return NextResponse.json({ error: "Lỗi thanh toán" }, { status: 500 });
   }
 

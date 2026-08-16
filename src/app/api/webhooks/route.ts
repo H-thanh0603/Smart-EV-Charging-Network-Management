@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const user = token ? verifyToken(token) : null;
   if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const list = await prisma.webhook.findMany({ orderBy: { createdAt: "desc" } });
-  return NextResponse.json(list);
+  return NextResponse.json(list.map(({ secret, ...rest }) => rest));
 }
 
 export async function POST(req: NextRequest) {

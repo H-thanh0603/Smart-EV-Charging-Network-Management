@@ -19,6 +19,8 @@ import { prisma } from "../src/lib/prisma";
 import { finalizeSession } from "../src/lib/session";
 
 const PORT = Number(process.env.OCPP_PORT || 9220);
+const SECRET = process.env.OCPP_SECRET;
+if (!SECRET) throw new Error("OCPP_SECRET chưa cấu hình trong .env (shared secret giữa CSMS và charge point).");
 
 // CALL = 2, CALLRESULT = 3, CALLERROR = 4
 type OcppCall = [2, string, string, any];
@@ -205,6 +207,11 @@ async function main() {
   console.log(`⚡ OCPP 1.6-J Central System đang lắng nghe ws://localhost:${PORT}/ocpp/{stationId}`);
 
   wss.on("connection", async (ws, req) => {
+    // Authenticate charge point bằng shared secret (header x-ocpp-secret).
+    if (req.headers["x-ocpp-secret"] !== SECRET) {
+      ws.close(1008, "Missing/invalid OCPP_SECRET");
+      return;
+    }
     // URL dạng /ocpp/{stationId}
     const url = req.url || "";
     const m = url.match(/\/ocpp\/(.+)$/);

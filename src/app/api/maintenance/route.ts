@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyToken, getTokenFromRequest } from "@/lib/auth";
+import { requireUser, requireRole } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-  const token = getTokenFromRequest(req);
-  const user = token ? verifyToken(token) : null;
+  const user = await requireUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const where = user.role === "TECHNICIAN" ? { assignedToId: user.id } : {};
@@ -22,9 +21,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const token = getTokenFromRequest(req);
-  const user = token ? verifyToken(token) : null;
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Chỉ ADMIN/TECHNICIAN tạo ticket + chuyển slot sang MAINTENANCE.
+  const user = await requireRole(req, ["ADMIN", "TECHNICIAN"]);
+  if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { stationId, slotId, title, description, priority, assignedToId } = await req.json();
   const ticket = await prisma.maintenanceTicket.create({

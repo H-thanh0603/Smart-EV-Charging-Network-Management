@@ -7,6 +7,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const reservation = await prisma.reservation.findUnique({ where: { id: params.id } });
   if (!reservation) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  // IDOR: chỉ chủ reservation được check-in
+  if (reservation.userId !== user.id && user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const now = new Date();
   const deadline = new Date(reservation.startTime.getTime() + 15 * 60 * 1000);
   if (now > deadline) {

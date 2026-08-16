@@ -16,6 +16,11 @@ export async function POST(req: NextRequest) {
   if (!subscription?.endpoint) return NextResponse.json({ error: "Invalid subscription" }, { status: 400 });
 
   const userAgent = req.headers.get("user-agent") || "";
+  // Hijack guard: endpoint đã thuộc user khác thì không cho cướp
+  const existing = await prisma.pushSubscription.findUnique({ where: { endpoint: subscription.endpoint }, select: { userId: true } });
+  if (existing && existing.userId !== u.id) {
+    return NextResponse.json({ error: "Subscription khác chủ sở hữu" }, { status: 403 });
+  }
   await prisma.pushSubscription.upsert({
     where: { endpoint: subscription.endpoint },
     update: { userId: u.id, p256dh: subscription.keys.p256dh, auth: subscription.keys.auth, userAgent },

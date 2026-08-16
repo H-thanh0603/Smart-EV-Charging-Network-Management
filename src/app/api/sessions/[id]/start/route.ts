@@ -9,7 +9,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const reservation = await prisma.reservation.findUnique({ where: { id: reservationId }, include: { slot: true } })
   if (!reservation) return NextResponse.json({ error: 'Reservation not found' }, { status: 404 })
   if (reservation.userId !== payload.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  if (reservation.status !== 'CHECKED_IN') return NextResponse.json({ error: 'Must check-in first' }, { status: 400 })
+  // checkin/route.ts đặt CONFIRMED; chấp nhận cả CHECKED_IN (tương thích)
+  if (reservation.status !== 'CHECKED_IN' && reservation.status !== 'CONFIRMED') return NextResponse.json({ error: 'Must check-in first' }, { status: 400 })
   const existing = await prisma.chargingSession.findFirst({ where: { reservationId, status: 'ACTIVE' } })
   if (existing) return NextResponse.json(existing)
   const [session] = await Promise.all([

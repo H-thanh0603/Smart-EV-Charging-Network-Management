@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken, getTokenFromRequest } from "@/lib/auth";
+import { buildVNPayUrl } from "@/lib/vnpay";
 import { parseBody, walletTopupSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
@@ -10,18 +11,24 @@ export async function POST(req: NextRequest) {
 
   const parsed = await parseBody(req, walletTopupSchema);
   if (!parsed.ok) return parsed.response;
-  const { amount } = parsed.data;
+  const { amount, bankCode } = parsed.data;
 
-  let wallet = await prisma.wallet.findUnique({ where: { userId: user.id } });
-  if (!wallet) wallet = await prisma.wallet.create({ data: { userId: user.id, balance: 0 } });
+  // Không cộng balance trực tiếp — chỉ tạo thanh toán VNPay.
+  // Balance được cộng khi VNPay IPN/return xác nhận (`payments/vnpay/*`).
+  const txnRef = `EV${Date.now()}${Math.floor(Math.random() * 1000)}`;
+  const ipAddr = req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "127.0.0.1";
 
-  const newBalance = wallet.balance + amount;
-  const updated = await prisma.wallet.update({
-    where: { userId: user.id },
-    data: { balance: newBalance }
+  await prisma.payment.create({
+    data: { userId: user.id, txnRef, amount, status: "PENDING", provider: "VNPAY", ipAddress: ipAddr }
   });
-  await prisma.walletTransaction.create({
-    data: { userId: user.id, type: "TOPUP", amount, balance: newBalance, note: "Nạp tiền vào ví" }
+
+  const paymentUrl = buildVNPayUrl({
+    txnRef,
+    amount,
+    orderInfo: `Nap tien EV Charge - ${user.email}`,
+    ipAddr,
+    bankCode,
   });
-  return NextResponse.json({ wallet: updated });
+
+  return NextResponse.json({ paymentUrl, txnRef });
 }

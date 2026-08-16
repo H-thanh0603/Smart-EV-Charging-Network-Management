@@ -15,6 +15,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     },
   })
   if (!reservation) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  // IDOR: chỉ chủ reservation đọc chi tiết (kèm invoice/session)
+  if (reservation.userId !== payload.id && payload.role !== 'ADMIN')
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   return NextResponse.json(reservation)
 }
 
@@ -27,8 +30,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!reservation) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (reservation.userId !== payload.id && !['ADMIN'].includes(payload.role))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  if (!['RESERVED', 'PENDING'].includes(reservation.status))
+  if (!['RESERVED', 'PENDING', 'CONFIRMED'].includes(reservation.status))
     return NextResponse.json({ error: 'Cannot cancel' }, { status: 400 })
   const updated = await prisma.reservation.update({ where: { id }, data: { status: 'CANCELLED' } })
+  // CONFIRMED = đã check-in giữ slot OCCUPIED → release lại để tránh kẹt
+  if (reservation.status === 'CONFIRMED' && reservation.slotId) {
+    await prisma.slot.update({ where: { id: reservation.slotId }, data: { status: 'AVAILABLE' } });
+  }
   return NextResponse.json(updated)
 }

@@ -1,9 +1,14 @@
 import crypto from "crypto";
 
-const TMN_CODE = process.env.VNPAY_TMN_CODE || "DEMOV210";
-const HASH_SECRET = process.env.VNPAY_HASH_SECRET || "RAOEXHGTUKCREMHVKHQYHSXBVCNIKYEK";
+// KHÔNG fallback hardcode secret — đọc env ngay lúc gọi. Throw nếu thiếu (tránh build/runtime fail sớm).
 const VNPAY_URL = process.env.VNPAY_URL || "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
 const RETURN_URL = process.env.VNPAY_RETURN_URL || "http://localhost:3000/api/payments/vnpay/return";
+function reqSecret() {
+  const code = process.env.VNPAY_TMN_CODE;
+  const secret = process.env.VNPAY_HASH_SECRET;
+  if (!code || !secret) throw new Error("VNPAY_TMN_CODE / VNPAY_HASH_SECRET chưa cấu hình trong .env");
+  return { code, secret };
+}
 
 function sortObject(obj: Record<string, any>) {
   const sorted: Record<string, string> = {};
@@ -37,10 +42,11 @@ export function buildVNPayUrl(params: {
   const eS = String(expire.getSeconds()).padStart(2, "0");
   const expireDate = `${ey}${em}${ed}${eH}${eM}${eS}`;
 
+  const { code, secret } = reqSecret();
   const vnpParams: Record<string, any> = {
     vnp_Version: "2.1.0",
     vnp_Command: "pay",
-    vnp_TmnCode: TMN_CODE,
+    vnp_TmnCode: code,
     vnp_Amount: params.amount * 100,
     vnp_CurrCode: "VND",
     vnp_TxnRef: params.txnRef,
@@ -56,7 +62,7 @@ export function buildVNPayUrl(params: {
 
   const sorted = sortObject(vnpParams);
   const signData = Object.entries(sorted).map(([k, v]) => `${k}=${v}`).join("&");
-  const signed = crypto.createHmac("sha512", HASH_SECRET).update(signData).digest("hex");
+  const signed = crypto.createHmac("sha512", secret).update(signData).digest("hex");
 
   return `${VNPAY_URL}?${signData}&vnp_SecureHash=${signed}`;
 }
@@ -70,10 +76,11 @@ export function verifyVNPayReturn(query: Record<string, string>): {
   bankCode?: string;
   bankTranNo?: string;
 } {
+  const { secret } = reqSecret();
   const { vnp_SecureHash, vnp_SecureHashType, ...rest } = query;
   const sorted = sortObject(rest);
   const signData = Object.entries(sorted).map(([k, v]) => `${k}=${v}`).join("&");
-  const expected = crypto.createHmac("sha512", HASH_SECRET).update(signData).digest("hex");
+  const expected = crypto.createHmac("sha512", secret).update(signData).digest("hex");
 
   return {
     valid: expected === vnp_SecureHash,
