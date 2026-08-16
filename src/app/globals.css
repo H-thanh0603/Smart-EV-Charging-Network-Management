@@ -2,36 +2,106 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== Design tokens — V-GREEN "bảng điều khiển năng lượng" ===== */
 :root {
   --bg: #f8fafc;
   --card-bg: #ffffff;
+  --surface-2: #eef2f7;
   --border: #e2e8f0;
+  --border-strong: #c3cddc;
   --text: #1e293b;
   --text-muted: #64748b;
   --hover: #f1f5f9;
+  --accent: #10b981;        /* emerald — brand */
+  --accent-strong: #059669;
+  --accent-soft: #d1fae5;
+  --energy: #0891b2;        /* cyan — telemetry/charging */
+  --warn: #d97706;
+  --danger: #dc2626;
+  --success: #059669;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --font-body: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .dark {
-  --bg: #0f172a;
-  --card-bg: #1e293b;
-  --border: #334155;
-  --text: #f1f5f9;
-  --text-muted: #94a3b8;
-  --hover: #334155;
+  --bg: #0b1220;
+  --card-bg: #111a2c;
+  --surface-2: #1c2740;
+  --border: #24324d;
+  --border-strong: #33456a;
+  --text: #ecf2f9;
+  --text-muted: #8fa3c3;
+  --hover: #1c2740;
+  --accent: #34d399;
+  --accent-strong: #10b981;
+  --accent-soft: rgba(6, 78, 59, 0.4);
+  --energy: #22d3ee;
+  --warn: #fbbf24;
+  --danger: #f43f5e;
+  --success: #34d399;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 html, body { height: 100%; }
 body {
   background: var(--bg);
   color: var(--text);
+  font-family: var(--font-body);
   transition: background-color 0.2s, color 0.2s;
+}
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+}
+.font-mono, code, .tabular {
+  font-family: var(--font-mono);
 }
 
 @layer components {
   .card {
     background: var(--card-bg);
     border: 1px solid var(--border);
-    @apply rounded-xl shadow-sm transition-shadow hover:shadow-md;
+    @apply rounded-xl shadow-sm transition-shadow;
+  }
+  .card:hover { box-shadow: var(--shadow-md); }
+  .card-hover {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    @apply rounded-xl shadow-sm transition-all;
+  }
+  .card-hover:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+  /* Signature: "charge rail" — electric hairline top bar */
+  .volt-line { position: relative; }
+  .volt-line::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: repeating-linear-gradient(45deg, var(--energy) 0 6px, transparent 6px 12px);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  /* Live pulse dot */
+  .live-dot { position: relative; }
+  .live-dot::after {
+    content: "";
+    position: absolute;
+    right: -0.5rem; top: 50%;
+    transform: translateY(-50%);
+    width: 6px; height: 6px;
+    border-radius: 9999px;
+    background: var(--accent);
+    animation: pulse-glow 2s infinite;
   }
   .input {
     background: var(--card-bg);
@@ -57,6 +127,30 @@ body {
   .badge-purple { @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-100 text-purple-700; }
   .badge-gray { @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700; }
   .skeleton { background: var(--hover); @apply rounded-lg animate-pulse; }
+
+  /* Shared table primitive */
+  .table-wrap { overflow-x: auto; }
+  .table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  .table thead th {
+    text-align: left;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--border-strong);
+    white-space: nowrap;
+  }
+  .table tbody td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .table tbody tr { transition: background-color 0.12s; }
+  .table tbody tr:hover { background: var(--hover); }
+  .table tbody tr:last-child td { border-bottom: 0; }
+  .table-empty { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); }
 }
 
 .dark .badge-green { @apply bg-emerald-900/40 text-emerald-300; }
