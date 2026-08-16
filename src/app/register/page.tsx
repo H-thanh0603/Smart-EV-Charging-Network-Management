@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { BoltMark } from "@/components/ui/Icon";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -24,12 +25,12 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-emerald-50 via-white to-cyan-50">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{background:"var(--bg)"}}>
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
-          <div className="inline-flex w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl items-center justify-center text-white text-2xl shadow-lg">⚡</div>
-          <h1 className="text-2xl font-bold text-slate-800 mt-4">Tạo tài khoản</h1>
-          <p className="text-sm text-slate-500 mt-1">Bắt đầu hành trình sạc xanh</p>
+          <div className="inline-flex w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl items-center justify-center text-white shadow-lg"><BoltMark className="w-7 h-7" /></div>
+          <h1 className="text-2xl font-bold mt-4">Tạo tài khoản</h1>
+          <p className="text-sm mt-1" style={{color:"var(--text-muted)"}}>Bắt đầu hành trình sạc xanh</p>
         </div>
 
         <div className="card p-6">
@@ -57,7 +58,7 @@ export default function RegisterPage() {
           </form>
         </div>
 
-        <p className="text-center text-sm text-slate-500 mt-6">
+        <p className="text-center text-sm mt-6" style={{color:"var(--text-muted)"}}>
           Đã có tài khoản?{" "}
           <Link href="/login" className="text-emerald-600 font-medium hover:underline">Đăng nhập</Link>
         </p>

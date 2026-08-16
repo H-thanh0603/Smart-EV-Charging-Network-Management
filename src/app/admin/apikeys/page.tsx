@@ -82,8 +82,8 @@ export default function AdminApiKeysPage() {
           ) : keys.length === 0 ? (
             <div className="p-12 text-center text-slate-500"><div className="text-4xl mb-3">🔐</div>Chưa có API key nào.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="table-wrap">
+              <table className="table">
                 <thead className="bg-slate-50 border-b border-slate-100">
                   <tr>
                     <th className="text-left p-3 font-medium text-slate-600">Tên</th>

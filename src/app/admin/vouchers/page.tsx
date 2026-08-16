@@ -78,7 +78,7 @@ export default function AdminVouchersPage() {
 
         {loading ? <div className="skeleton h-32"></div> : (
           <div className="card overflow-hidden">
-            <table className="w-full text-sm">
+            <table className="table">
               <thead style={{background:"var(--hover)"}}>
                 <tr className="text-left">
                   <th className="px-6 py-3 text-xs uppercase font-semibold tracking-wider" style={{color:"var(--text-muted)"}}>Code</th>

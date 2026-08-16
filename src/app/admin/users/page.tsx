@@ -121,8 +121,8 @@ export default function AdminUsersPage() {
       <div className="card overflow-hidden">
         {loading ? <div className="skeleton h-32"></div> : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="table-wrap">
+              <table className="table">
                 <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
                   <tr className="text-left">
                     <th className="px-4 py-3 font-semibold">User</th>

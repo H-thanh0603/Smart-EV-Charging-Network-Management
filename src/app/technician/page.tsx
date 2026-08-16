@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import { Icon } from "@/components/ui/Icon";
 
 export default function TechnicianDashboard() {
   const [data, setData] = useState<any>(null);
@@ -37,14 +38,14 @@ export default function TechnicianDashboard() {
   return (
     <AppShell title="Bảng điều khiển kỹ thuật">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold">Chào, {user.name?.split(" ")[0]} 🔧</h2>
+        <h2 className="text-2xl font-bold flex items-center gap-2">Chào, {user.name?.split(" ")[0]} <Icon name="wrench" className="w-5 h-5 text-orange-500" /></h2>
         <p className="text-sm" style={{color:"var(--text-muted)"}}>Bạn có {data.open.length + data.inProgress.length} ticket đang xử lý</p>
       </div>
 
       {data.critical.length > 0 && (
         <div className="rounded-2xl bg-gradient-to-br from-red-500 via-orange-500 to-amber-500 text-white p-5 mb-6 shadow-2xl animate-pulse">
           <div className="flex items-center gap-3">
-            <span className="text-4xl">🚨</span>
+            <Icon name="shield" className="w-9 h-9" />
             <div className="flex-1">
               <p className="font-bold text-lg">{data.critical.length} ticket CRITICAL</p>
               <p className="text-sm opacity-90">Yêu cầu xử lý ngay lập tức</p>
@@ -75,12 +76,12 @@ export default function TechnicianDashboard() {
 
       <div className="card p-5 mb-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold">📋 Việc cần làm hôm nay</h3>
+          <h3 className="font-bold flex items-center gap-2"><Icon name="clipboard" className="w-4 h-4" /> Việc cần làm hôm nay</h3>
           <Link href="/admin/maintenance" className="text-sm text-orange-600 hover:underline font-semibold">Tất cả →</Link>
         </div>
         {data.open.length === 0 && data.inProgress.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-4xl mb-2">🎉</p>
+            <div className="mb-2 flex justify-center"><Icon name="check" className="w-10 h-10 text-emerald-500" /></div>
             <p className="text-sm" style={{color:"var(--text-muted)"}}>Tất cả việc đã hoàn thành. Nghỉ ngơi nhé!</p>
           </div>
         ) : (
@@ -91,8 +92,8 @@ export default function TechnicianDashboard() {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{t.title}</p>
                   <div className="flex items-center gap-2 text-xs mt-1">
-                    <span className={t.status === "IN_PROGRESS" ? "badge-blue" : "badge-yellow"}>{t.status === "IN_PROGRESS" ? "🔧 Đang xử lý" : "📋 Chờ"}</span>
-                    <span style={{color:"var(--text-muted)"}}>📍 {t.station?.name}</span>
+                    <span className={t.status === "IN_PROGRESS" ? "badge-blue" : "badge-yellow"}>{t.status === "IN_PROGRESS" ? "Đang xử lý" : "Chờ"}</span>
+                    <span className="flex items-center gap-1" style={{color:"var(--text-muted)"}}><Icon name="mappin" className="w-3 h-3" /> {t.station?.name}</span>
                   </div>
                 </div>
               </Link>
@@ -103,7 +104,7 @@ export default function TechnicianDashboard() {
 
       {data.stationsWithMaint.length > 0 && (
         <div className="card p-5">
-          <h3 className="font-bold mb-3">🏢 Trạm có trụ đang bảo trì</h3>
+          <h3 className="font-bold mb-3 flex items-center gap-2"><Icon name="building" className="w-4 h-4" /> Trạm có trụ đang bảo trì</h3>
           <div className="space-y-2">
             {data.stationsWithMaint.slice(0, 4).map((s: any) => (
               <Link key={s.id} href={`/stations/${s.id}`} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition">
@@ -112,7 +113,7 @@ export default function TechnicianDashboard() {
                   <p className="font-semibold truncate">{s.name}</p>
                   <p className="text-xs" style={{color:"var(--text-muted)"}}>{s.maintenance} trụ bảo trì • {s.available}/{s.total} trụ trống</p>
                 </div>
-                <span className="text-xl">→</span>
+                <Icon name="chevronRight" className="w-5 h-5" style={{color:"var(--text-muted)"}} />
               </Link>
             ))}
           </div>

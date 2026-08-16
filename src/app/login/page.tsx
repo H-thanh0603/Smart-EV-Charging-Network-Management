@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Icon, BoltMark } from "@/components/ui/Icon";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -37,7 +38,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 opacity-10" style={{backgroundImage:"radial-gradient(circle at 30% 20%, white 0%, transparent 50%), radial-gradient(circle at 70% 80%, white 0%, transparent 50%)"}}></div>
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center text-2xl">⚡</div>
+            <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center text-white"><BoltMark className="w-5 h-5" /></div>
             <span className="font-bold text-xl">EV Charge VN</span>
           </div>
           <div>
@@ -59,13 +60,13 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-900">
         <div className="w-full max-w-sm">
           <div className="lg:hidden text-center mb-8">
-            <div className="inline-flex w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl items-center justify-center text-white text-2xl shadow-lg">⚡</div>
+            <div className="inline-flex w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl items-center justify-center text-white shadow-lg"><BoltMark className="w-7 h-7" /></div>
           </div>
           <h1 className="text-2xl font-bold mb-1">Đăng nhập</h1>
           <p className="text-sm mb-8" style={{color:"var(--text-muted)"}}>Chào mừng quay lại! Đăng nhập để tiếp tục.</p>
 
           {error && <div className="bg-red-50 border border-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm flex items-start gap-2">
-            <span>⚠️</span><span>{error}</span>
+            <Icon name="x" className="w-4 h-4 mt-0.5 shrink-0 text-red-600" /><span>{error}</span>
           </div>}
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -80,7 +81,9 @@ export default function LoginPage() {
               </div>
               <div className="relative">
                 <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="input pr-10" placeholder="••••••••" required />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{showPassword ? "🙈" : "👁"}</button>
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{color:"var(--text-muted)"}}>
+                  <Icon name={showPassword ? "eye" : "eyeOff"} className="w-4 h-4" />
+                </button>
               </div>
             </div>
             <button type="submit" disabled={loading} className="btn-primary w-full">
@@ -97,7 +100,7 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               {[
                 {e:"admin@evcharge.com",l:"Admin V-GREEN",c:"text-violet-600"},
-                {e:"driver@xanhsm.com",l:"🚖 Tài xế Xanh SM",c:"text-green-600"},
+                {e:"driver@xanhsm.com",l:"Tài xế Xanh SM",c:"text-green-600"},
                 {e:"customer@evcharge.com",l:"Khách lẻ",c:"text-emerald-600"},
                 {e:"vip@evcharge.com",l:"VIP Gold",c:"text-amber-600"},
                 {e:"tech@evcharge.com",l:"Kỹ thuật viên",c:"text-orange-600"},

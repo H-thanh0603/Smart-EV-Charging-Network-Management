@@ -5,6 +5,7 @@ import {
   Users, Database, HeartHandshake, MessageSquare, Landmark, TrendingUp,
   Link2, KeyRound, Menu, LogOut, Sun, Moon, Bell, ChevronDown, X, Plus,
   Check, Minus, Clock, Shield, Gauge, Car, Radio, Settings, ChevronRight,
+  Eye, EyeOff,
 } from "lucide-react";
 import type { LucideProps } from "lucide-react";
 
@@ -17,6 +18,7 @@ const map: Record<string, React.ComponentType<LucideProps>> = {
   logout: LogOut, sun: Sun, moon: Moon, bell: Bell, chevronDown: ChevronDown,
   x: X, plus: Plus, check: Check, minus: Minus, clock: Clock, shield: Shield,
   gauge: Gauge, car: Car, radio: Radio, settings: Settings, chevronRight: ChevronRight,
+  eye: Eye, eyeOff: EyeOff,
 };
 
 export function Icon({

@@ -62,8 +62,8 @@ export default function AdminPaymentsPage() {
               Chưa có giao dịch nào.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="table-wrap">
+              <table className="table">
                 <thead className="bg-slate-50 border-b border-slate-100">
                   <tr>
                     <th className="text-left p-3 font-medium text-slate-600">Mã GD</th>

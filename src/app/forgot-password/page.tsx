@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { BoltMark } from "@/components/ui/Icon";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -21,12 +22,12 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-emerald-50 via-white to-cyan-50">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{background:"var(--bg)"}}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-6">
-          <div className="inline-flex w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl items-center justify-center text-white text-2xl shadow-lg">🔑</div>
-          <h1 className="text-2xl font-bold text-slate-800 mt-4">Quên mật khẩu</h1>
-          <p className="text-sm text-slate-500 mt-1">Nhập email để nhận link đặt lại</p>
+          <div className="inline-flex w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl items-center justify-center text-white shadow-lg"><BoltMark className="w-7 h-7" /></div>
+          <h1 className="text-2xl font-bold mt-4">Quên mật khẩu</h1>
+          <p className="text-sm mt-1" style={{color:"var(--text-muted)"}}>Nhập email để nhận link đặt lại</p>
         </div>
 
         <div className="card p-6">
@@ -52,7 +53,7 @@ export default function ForgotPasswordPage() {
               <button type="submit" disabled={loading} className="btn-primary w-full">
                 {loading ? "Đang gửi..." : "Gửi link đặt lại"}
               </button>
-              <Link href="/login" className="block text-center text-sm text-slate-500 hover:text-slate-700">← Quay lại đăng nhập</Link>
+              <Link href="/login" className="block text-center text-sm" style={{color:"var(--text-muted)"}}>← Quay lại đăng nhập</Link>
             </form>
           )}
         </div>

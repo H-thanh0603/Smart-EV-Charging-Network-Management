@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import { Icon } from "@/components/ui/Icon";
 
 export default function DriverDashboardPage() {
   const [data, setData] = useState<any>(null);
@@ -40,20 +41,20 @@ export default function DriverDashboardPage() {
     <AppShell title="Tổng quan">
       <div className="mb-6">
         <p className="text-sm" style={{color:"var(--text-muted)"}}>{greeting},</p>
-        <h2 className="text-2xl font-bold">{user.name?.split(" (")[0]} 👋</h2>
+        <h2 className="text-2xl font-bold">{user.name?.split(" (")[0]}</h2>
       </div>
 
       {data?.active && (
         <Link href="/sessions" className="block mb-6">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 text-white p-5 shadow-2xl animate-pulse">
             <div className="flex items-center gap-4">
-              <div className="text-5xl">⚡</div>
+              <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center"><Icon name="bolt" className="w-7 h-7" /></div>
               <div className="flex-1">
                 <p className="text-xs uppercase tracking-wider opacity-90">Đang sạc</p>
                 <p className="font-bold text-lg">{data.active.slot?.station?.name || "Trụ sạc"}</p>
                 <p className="text-sm opacity-90">Bắt đầu lúc {new Date(data.active.startTime).toLocaleTimeString("vi-VN", {hour:"2-digit",minute:"2-digit"})}</p>
               </div>
-              <span className="text-2xl">→</span>
+              <Icon name="chevronRight" className="w-6 h-6" />
             </div>
           </div>
         </Link>
@@ -67,25 +68,25 @@ export default function DriverDashboardPage() {
               <p className="text-xs opacity-80 uppercase tracking-wider mb-1">Số dư ví Xanh SM</p>
               <p className="text-3xl font-bold">{data?.wallet?.wallet?.balance?.toLocaleString("vi-VN") || 0} ₫</p>
             </div>
-            <span className="text-3xl">💳</span>
+            <Icon name="wallet" className="w-8 h-8 opacity-90" />
           </div>
           <div className="flex gap-2 mt-4">
             <Link href="/wallet" className="flex-1 bg-white/20 backdrop-blur text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/30 text-center">Nạp tiền</Link>
-            <Link href="/scan" className="flex-1 bg-white text-emerald-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-50 text-center">⚡ Quét QR sạc</Link>
+            <Link href="/scan" className="flex-1 bg-white text-emerald-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-50 text-center flex items-center justify-center gap-1.5"><Icon name="camera" className="w-4 h-4" /> Quét QR sạc</Link>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="card p-4 text-center"><p className="text-2xl mb-1">⚡</p><p className="text-2xl font-bold">{data?.todayCount || 0}</p><p className="text-xs" style={{color:"var(--text-muted)"}}>Hôm nay</p></div>
-        <div className="card p-4 text-center"><p className="text-2xl mb-1">🔋</p><p className="text-2xl font-bold">{(data?.totalEnergy || 0).toFixed(0)}</p><p className="text-xs" style={{color:"var(--text-muted)"}}>kWh tổng</p></div>
-        <div className="card p-4 text-center"><p className="text-2xl mb-1">⭐</p><p className="text-2xl font-bold">{user.loyaltyTier || "BRONZE"}</p><p className="text-xs" style={{color:"var(--text-muted)"}}>{user.loyaltyPoints || 0} pt</p></div>
+        <div className="card p-4 text-center"><div className="mb-1 flex justify-center"><Icon name="bolt" className="w-6 h-6 text-emerald-500" /></div><p className="text-2xl font-bold font-display">{data?.todayCount || 0}</p><p className="text-xs" style={{color:"var(--text-muted)"}}>Hôm nay</p></div>
+        <div className="card p-4 text-center"><div className="mb-1 flex justify-center"><Icon name="gauge" className="w-6 h-6 text-cyan-600" /></div><p className="text-2xl font-bold font-display">{(data?.totalEnergy || 0).toFixed(0)}</p><p className="text-xs" style={{color:"var(--text-muted)"}}>kWh tổng</p></div>
+        <div className="card p-4 text-center"><div className="mb-1 flex justify-center"><Icon name="star" className="w-6 h-6 text-amber-500" /></div><p className="text-2xl font-bold font-display">{user.loyaltyTier || "BRONZE"}</p><p className="text-xs" style={{color:"var(--text-muted)"}}>{user.loyaltyPoints || 0} pt</p></div>
       </div>
 
       {suggested.length > 0 && (
         <div className="mb-6">
           <div className="flex justify-between items-center mb-3">
-            <h3 className="font-bold text-lg">🔥 Trạm sạc gợi ý</h3>
+            <h3 className="font-bold text-lg flex items-center gap-2"><Icon name="trending" className="w-5 h-5 text-emerald-500" /> Trạm sạc gợi ý</h3>
             <Link href="/stations" className="text-sm text-emerald-600 hover:underline">Xem tất cả →</Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -100,7 +101,7 @@ export default function DriverDashboardPage() {
                 <div className="p-3">
                   <p className="font-semibold text-sm group-hover:text-emerald-600 line-clamp-1">{s.name}</p>
                   <p className="text-xs flex items-center gap-2" style={{color:"var(--text-muted)"}}>
-                    <span>📍 {s.distance} km</span>
+                    <span className="flex items-center gap-1"><Icon name="mappin" className="w-3 h-3" /> {s.distance} km</span>
                     {(s.rating || 0) > 0 && <span className="text-amber-500">★ {s.rating.toFixed(1)}</span>}
                   </p>
                 </div>
@@ -112,7 +113,7 @@ export default function DriverDashboardPage() {
 
       <div className="card p-5 mb-6">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="font-semibold">🚗 Xe của tôi</h3>
+          <h3 className="font-semibold flex items-center gap-2"><Icon name="car" className="w-4 h-4" /> Xe của tôi</h3>
           <Link href="/driver/vehicles" className="text-sm text-emerald-600 hover:underline">Quản lý →</Link>
         </div>
         {data?.vehicles?.length === 0 ? (
@@ -121,12 +122,12 @@ export default function DriverDashboardPage() {
           <div className="space-y-2">
             {data?.vehicles?.slice(0, 2).map((v: any) => (
               <div key={v.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-green-600 rounded-lg flex items-center justify-center text-white text-xl">🚗</div>
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-green-600 rounded-lg flex items-center justify-center text-white"><Icon name="car" className="w-6 h-6" /></div>
                 <div className="flex-1">
                   <p className="font-semibold">{v.brand} {v.model}</p>
                   <p className="text-xs" style={{color:"var(--text-muted)"}}>{v.licensePlate} • {v.connectorType} • {v.batteryKwh} kWh</p>
                 </div>
-                {v.fleet && <span className="badge-purple">🏢 -{v.fleet.discountRate}%</span>}
+                {v.fleet && <span className="badge-purple">-{v.fleet.discountRate}%</span>}
               </div>
             ))}
           </div>

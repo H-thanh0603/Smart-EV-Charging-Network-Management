@@ -164,7 +164,7 @@ export default function AdminWebhooksPage() {
               <div className="card p-12 text-center text-slate-400"><div className="text-5xl mb-3">🔑</div>Chưa có API key</div>
             ) : (
               <div className="card overflow-hidden">
-                <table className="w-full text-sm">
+                <table className="table">
                   <thead className="bg-slate-50">
                     <tr className="text-left">
                       <th className="px-6 py-3 text-xs uppercase font-semibold tracking-wider text-slate-500">Tên</th>

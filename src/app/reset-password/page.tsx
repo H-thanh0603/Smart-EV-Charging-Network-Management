@@ -2,6 +2,7 @@
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { BoltMark } from "@/components/ui/Icon";
 
 function ResetForm() {
   const router = useRouter();
@@ -30,18 +31,18 @@ function ResetForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-emerald-50 via-white to-cyan-50">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{background:"var(--bg)"}}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-6">
-          <div className="inline-flex w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl items-center justify-center text-white text-2xl shadow-lg">🔒</div>
-          <h1 className="text-2xl font-bold text-slate-800 mt-4">Đặt lại mật khẩu</h1>
+          <div className="inline-flex w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl items-center justify-center text-white shadow-lg"><BoltMark className="w-7 h-7" /></div>
+          <h1 className="text-2xl font-bold mt-4">Đặt lại mật khẩu</h1>
         </div>
         <div className="card p-6">
           {success ? (
             <div className="text-center">
               <div className="text-5xl mb-3">✓</div>
               <p className="font-semibold text-emerald-700">Đặt lại thành công!</p>
-              <p className="text-sm text-slate-500 mt-1">Đang chuyển hướng...</p>
+              <p className="text-sm mt-1" style={{color:"var(--text-muted)"}}>Đang chuyển hướng...</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -55,7 +56,7 @@ function ResetForm() {
                 <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="input" required />
               </div>
               <button type="submit" disabled={loading || !token} className="btn-primary w-full">{loading ? "Đang xử lý..." : "Đặt lại mật khẩu"}</button>
-              <Link href="/login" className="block text-center text-sm text-slate-500 hover:text-slate-700">← Quay lại đăng nhập</Link>
+              <Link href="/login" className="block text-center text-sm" style={{color:"var(--text-muted)"}}>← Quay lại đăng nhập</Link>
             </form>
           )}
         </div>

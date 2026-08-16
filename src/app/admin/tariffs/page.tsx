@@ -53,7 +53,7 @@ export default function AdminTariffsPage() {
 
         {loading ? <div className="skeleton h-32"></div> : (
           <div className="card overflow-hidden">
-            <table className="w-full text-sm">
+            <table className="table">
               <thead className="bg-slate-50">
                 <tr className="text-left">
                   <th className="px-6 py-3 text-xs uppercase font-semibold tracking-wider text-slate-500">Tên</th>
