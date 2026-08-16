@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
+import { Icon } from "@/components/ui/Icon";
+import { toast } from "@/components/ui/Toaster";
 
 const TIER_COLORS: Record<string, string> = {
   BRONZE: "from-amber-700 to-orange-700",
@@ -33,8 +35,8 @@ export default function LoyaltyPage() {
       body: JSON.stringify({ points: redeemAmount })
     });
     const d = await res.json();
-    if (!res.ok) { alert(d.error); return; }
-    alert(`Quy đổi thành công ${d.value.toLocaleString("vi-VN")} ₫ vào ví!`);
+    if (!res.ok) { toast(d.error, "error"); return; }
+    toast(`Quy đổi thành công ${d.value.toLocaleString("vi-VN")} ₫ vào ví!`, "success");
     setShowRedeem(false);
     load();
   }

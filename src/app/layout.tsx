@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Space_Grotesk, Be_Vietnam_Pro } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { Toaster } from "@/components/ui/Toaster";
 
 const spaceGrotesk = Space_Grotesk({
   weight: ["500", "600", "700"],
@@ -32,7 +33,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="font-body">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <Toaster />
+        </ThemeProvider>
         <script dangerouslySetInnerHTML={{ __html: `
           if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("/sw.js").catch(console.error);

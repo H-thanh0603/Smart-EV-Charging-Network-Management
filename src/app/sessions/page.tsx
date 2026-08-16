@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import { Icon } from "@/components/ui/Icon";
+import { toast } from "@/components/ui/Toaster";
 
 export default function SessionsPage() {
   const router = useRouter();
@@ -27,8 +29,8 @@ export default function SessionsPage() {
     const token = localStorage.getItem("token");
     const res = await fetch(`/api/sessions/${id}/stop`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
     const d = await res.json();
-    if (!res.ok) { alert(d.error); return; }
-    alert(`Phiên sạc kết thúc!\n${d.invoice.energyKwh} kWh • ${d.invoice.amount.toLocaleString("vi-VN")} ₫\n+${d.pointsEarned} điểm thưởng`);
+    if (!res.ok) { toast(d.error, "error"); return; }
+    toast(`Phiên sạc kết thúc! ${d.invoice.energyKwh} kWh • ${d.invoice.amount.toLocaleString("vi-VN")} ₫`, "success");
     router.push("/invoices");
   }
 
@@ -55,7 +57,7 @@ export default function SessionsPage() {
 
         <div className="card p-3 mb-6 bg-amber-50 border-amber-200">
           <p className="text-xs text-amber-800">
-            ℹ️ <strong>Demo mode:</strong> Năng lượng (kWh) được mô phỏng theo công thức <code className="bg-white px-1 rounded">thời_gian × công_suất × 0.9</code>.
+            <strong>Demo mode:</strong> Năng lượng (kWh) được mô phỏng theo công thức <code className="bg-white px-1 rounded">thời_gian × công_suất × 0.9</code>.
             Hệ thống thật dùng OCPP 1.6/2.0 để đọc dữ liệu meter realtime từ trụ qua WebSocket (MeterValues mỗi 15s).
           </p>
         </div>
@@ -73,7 +75,7 @@ export default function SessionsPage() {
                       <h4 className="font-semibold text-slate-800 text-lg">{s.slot.station.name}</h4>
                       <p className="text-sm text-slate-500">Trụ {s.slot.slotNumber} • {s.slot.powerKw}kW</p>
                     </div>
-                    <span className="badge-green">⚡ Đang sạc</span>
+                    <span className="badge-green flex items-center gap-1"><Icon name="bolt" className="w-3 h-3" /> Đang sạc</span>
                   </div>
                   <div className="grid grid-cols-3 gap-3 mb-4">
                     <div className="bg-white rounded-lg p-3 border border-emerald-100">
@@ -89,7 +91,7 @@ export default function SessionsPage() {
                       <p className="font-semibold text-sm text-emerald-700">{simulatedKwh(s)} kWh</p>
                     </div>
                   </div>
-                  <button onClick={() => stop(s.id)} className="btn-danger w-full">⏹ Dừng sạc</button>
+                  <button onClick={() => stop(s.id)} className="btn-danger w-full flex items-center justify-center gap-2"><Icon name="x" className="w-4 h-4" /> Dừng sạc</button>
                 </div>
               ))}
             </div>
@@ -131,8 +133,8 @@ export default function SessionsPage() {
             )}
             {sessions.length === 0 && (
               <div className="card p-12 text-center">
-                <div className="text-5xl mb-3">⚡</div>
-                <p className="font-medium text-slate-700">Chưa có phiên sạc nào</p>
+                <div className="mb-3 flex justify-center"><Icon name="bolt" className="w-12 h-12 text-emerald-500" /></div>
+                <p className="font-medium">Chưa có phiên sạc nào</p>
                 <Link href="/stations"><button className="btn-primary mt-4">Tìm trạm sạc</button></Link>
               </div>
             )}

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
+import { Icon } from "@/components/ui/Icon";
 
 export default function VouchersPage() {
   const [vouchers, setVouchers] = useState<any[]>([]);
@@ -25,13 +26,13 @@ export default function VouchersPage() {
     <AppShell title="Voucher">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold">🎟️ Mã giảm giá</h2>
+          <h2 className="text-2xl font-bold flex items-center gap-2"><Icon name="ticket" className="w-6 h-6 text-emerald-600" /> Mã giảm giá</h2>
           <p className="text-sm" style={{color:"var(--text-muted)"}}>Áp dụng khi thanh toán hoá đơn</p>
         </div>
 
         {loading ? <div className="skeleton h-32"></div> : vouchers.length === 0 ? (
           <div className="card p-12 text-center" style={{color:"var(--text-muted)"}}>
-            <div className="text-5xl mb-3">🎟️</div>
+            <div className="mb-3 flex justify-center"><Icon name="ticket" className="w-12 h-12 text-emerald-500" /></div>
             <p>Chưa có voucher nào hiện hành</p>
           </div>
         ) : (
@@ -45,7 +46,7 @@ export default function VouchersPage() {
                   <div className="absolute -left-4 -bottom-4 w-16 h-16 bg-white/10 rounded-full"></div>
                   <div className="relative">
                     <div className="flex justify-between items-start mb-3">
-                      <span className="text-3xl">🎟️</span>
+                      <Icon name="ticket" className="w-7 h-7" />
                       <span className="text-xs bg-white/20 backdrop-blur px-2 py-0.5 rounded-full">
                         {v.type === "PERCENT" ? `${v.value}%` : `${(v.value/1000).toFixed(0)}k`}
                       </span>
@@ -58,7 +59,7 @@ export default function VouchersPage() {
                       <div className="flex items-center justify-between">
                         <code className="font-mono font-bold text-lg tracking-wider">{v.code}</code>
                         <button onClick={() => copy(v.code)} className="bg-white text-amber-600 px-2 py-1 rounded text-xs font-semibold hover:bg-amber-50">
-                          {copied === v.code ? "✓ Đã copy" : "Copy"}
+                          {copied === v.code ? <Icon name="check" className="w-3.5 h-3.5" /> : "Copy"}
                         </button>
                       </div>
                     </div>

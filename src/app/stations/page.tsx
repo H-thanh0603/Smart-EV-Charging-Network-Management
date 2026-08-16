@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import AppShell from "@/components/AppShell";
+import { Icon } from "@/components/ui/Icon";
 
 const StationMap = dynamic(() => import("@/components/StationMap"), { ssr: false });
 
@@ -21,6 +22,14 @@ export default function StationsPage() {
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
   const [locError, setLocError] = useState("");
   const [findingLoc, setFindingLoc] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const activeFilterCount =
+    (district !== "ALL" ? 1 : 0) + (connector !== "ALL" ? 1 : 0) + (power !== "ALL" ? 1 : 0) +
+    (brand !== "ALL" ? 1 : 0) + (statusF !== "ALL" ? 1 : 0) + (sortBy !== "default" ? 1 : 0) + amenityF.length;
+
+  function resetFilters() {
+    setDistrict("ALL"); setConnector("ALL"); setPower("ALL"); setBrand("ALL"); setStatusF("ALL"); setSortBy("default"); setAmenityF([]);
+  }
 
   async function loadLive() {
     const res = await fetch("/api/stations/live", { credentials: "include" });
@@ -98,55 +107,87 @@ export default function StationsPage() {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">Mạng lưới trạm sạc</h2>
           <div className="flex gap-1 p-1 rounded-lg" style={{background:"var(--card-bg)", border:"1px solid var(--border)"}}>
-            {[{k:"list",l:"📋"},{k:"map",l:"🗺️"},{k:"near",l:"📍"}].map(v => (
-              <button key={v.k} onClick={() => v.k === "near" ? findNearMe() : setView(v.k as any)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium ${view === v.k ? "bg-emerald-500 text-white" : ""}`}>{v.l}</button>
+            {[{k:"list",l:"list",t:"Danh sách"},{k:"map",l:"map",t:"Bản đồ"},{k:"near",l:"mappin",t:"Gần tôi"}].map(v => (
+              <button key={v.k} onClick={() => v.k === "near" ? findNearMe() : setView(v.k as any)} title={v.t}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium ${view === v.k ? "bg-emerald-500 text-white" : "text-muted hover:text-emerald-600"}`}>
+                <Icon name={v.l} className="w-4 h-4" />{v.t}
+              </button>
             ))}
           </div>
         </div>
 
         {locError && <div className="card p-3 mb-4 bg-red-50 border-red-200 text-red-700 text-sm">{locError}</div>}
-        {findingLoc && <div className="card p-3 mb-4 text-sm">📍 Đang xác định vị trí...</div>}
+        {findingLoc && <div className="card p-3 mb-4 text-sm flex items-center gap-2"><Icon name="mappin" className="w-4 h-4 animate-pulse" /> Đang xác định vị trí...</div>}
         {view === "near" && userLoc && (
-          <div className="card p-3 mb-4 bg-emerald-50 border-emerald-200 text-emerald-800 text-sm">
-            📍 Tìm thấy vị trí của bạn — hiển thị trạm gần nhất
+          <div className="card p-3 mb-4 bg-emerald-50 border-emerald-200 text-emerald-800 text-sm flex items-center gap-2">
+            <Icon name="mappin" className="w-4 h-4" /> Tìm thấy vị trí của bạn — hiển thị trạm gần nhất
+          </div>
+        )}
+
+        <div className="card p-4 mb-4">
+          <input type="text" placeholder="Tìm theo tên, địa chỉ..." value={search} onChange={e => setSearch(e.target.value)} className="input" />
+        </div>
+
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {district !== "ALL" && <button onClick={() => setDistrict("ALL")} className="badge-blue hover:opacity-80">📍 {district} ×</button>}
+            {connector !== "ALL" && <button onClick={() => setConnector("ALL")} className="badge-blue hover:opacity-80">🔌 {connector} ×</button>}
+            {power !== "ALL" && <button onClick={() => setPower("ALL")} className="badge-blue hover:opacity-80">⚡ {power} kW ×</button>}
+            {brand !== "ALL" && <button onClick={() => setBrand("ALL")} className="badge-blue hover:opacity-80">🏢 {brand} ×</button>}
+            {statusF !== "ALL" && <button onClick={() => setStatusF("ALL")} className="badge-blue hover:opacity-80">● {statusF} ×</button>}
+            {sortBy !== "default" && <button onClick={() => setSortBy("default")} className="badge-blue hover:opacity-80">↕ {sortBy} ×</button>}
+            {amenityF.map(a => <button key={a} onClick={() => setAmenityF(amenityF.filter(x => x !== a))} className="badge-blue hover:opacity-80">{a} ×</button>)}
           </div>
         )}
 
         <div className="card p-4 mb-6">
-          <input type="text" placeholder="🔍 Tìm theo tên, địa chỉ..." value={search} onChange={e => setSearch(e.target.value)} className="input mb-3" />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <select value={district} onChange={e => setDistrict(e.target.value)} className="input">
-              <option value="ALL">📍 Tất cả quận</option>
-              {districts.map(d => <option key={d} value={d}>{d}</option>)}
-            </select>
-            <select value={connector} onChange={e => setConnector(e.target.value)} className="input">
-              <option value="ALL">🔌 Tất cả chuẩn</option>
-              {["CCS2","CHAdeMO","Type2","GB/T"].map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select value={brand} onChange={e => setBrand(e.target.value)} className="input">
-              <option value="ALL">🏢 Tất cả thương hiệu</option>
-              <option value="V-GREEN">⚡ V-GREEN (VinFast)</option>
-              <option value="ChargePlus">🔌 ChargePlus</option>
-              <option value="EVOne">🌿 EVOne</option>
-            </select>
-            <select value={statusF} onChange={e => setStatusF(e.target.value)} className="input">
-              <option value="ALL">🟢 Mọi trạng thái</option>
-              <option value="FREE">🟢 Còn trống</option>
-              <option value="BUSY">🟡 Đông</option>
-              <option value="FULL">🔴 Đầy / Đang sửa</option>
-            </select>
-            <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="input">
-              <option value="default">📌 Mặc định</option>
-              <option value="rating">⭐ Đánh giá cao nhất</option>
-              <option value="available">🟢 Nhiều trụ trống</option>
-              <option value="distance">📍 Gần nhất</option>
-            </select>
-            <select value={power} onChange={e => setPower(e.target.value)} className="input">
-              <option value="ALL">⚡ Tất cả công suất</option>
-              {[7,22,50,100].map(p => <option key={p} value={p}>{p} kW</option>)}
-            </select>
-          </div>
+          <button onClick={() => setFilterOpen(!filterOpen)} className="flex items-center justify-between w-full text-sm font-medium">
+            <span className="flex items-center gap-2">
+              <Icon name="plug" className="w-4 h-4" /> Bộ lọc
+              {activeFilterCount > 0 && <span className="badge-green">{activeFilterCount}</span>}
+            </span>
+            <Icon name="chevronDown" className={`w-4 h-4 transition-transform ${filterOpen ? "rotate-180" : ""}`} />
+          </button>
+          {filterOpen && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 animate-fadeIn">
+              <select value={district} onChange={e => setDistrict(e.target.value)} className="input">
+                <option value="ALL">Tất cả quận</option>
+                {districts.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+              <select value={connector} onChange={e => setConnector(e.target.value)} className="input">
+                <option value="ALL">Tất cả chuẩn</option>
+                {["CCS2","CHAdeMO","Type2","GB/T"].map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select value={brand} onChange={e => setBrand(e.target.value)} className="input">
+                <option value="ALL">Tất cả thương hiệu</option>
+                <option value="V-GREEN">V-GREEN (VinFast)</option>
+                <option value="ChargePlus">ChargePlus</option>
+                <option value="EVOne">EVOne</option>
+              </select>
+              <select value={statusF} onChange={e => setStatusF(e.target.value)} className="input">
+                <option value="ALL">Mọi trạng thái</option>
+                <option value="FREE">Còn trống</option>
+                <option value="BUSY">Đông</option>
+                <option value="FULL">Đầy / Đang sửa</option>
+              </select>
+              <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="input">
+                <option value="default">Mặc định</option>
+                <option value="rating">Đánh giá cao nhất</option>
+                <option value="available">Nhiều trụ trống</option>
+                <option value="distance">Gần nhất</option>
+              </select>
+              <select value={power} onChange={e => setPower(e.target.value)} className="input">
+                <option value="ALL">Tất cả công suất</option>
+                {[7,22,50,100].map(p => <option key={p} value={p}>{p} kW</option>)}
+              </select>
+              <div className="sm:col-span-3 flex items-center gap-2">
+                <button onClick={() => setFilterOpen(false)} className="btn-secondary text-xs">Xong</button>
+                {activeFilterCount > 0 && (
+                  <button onClick={resetFilters} className="btn-secondary text-xs !text-red-600">Bỏ lọc</button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {loading ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{[1,2,3,4].map(i => <div key={i} className="skeleton h-40"></div>)}</div> : (
@@ -159,7 +200,7 @@ export default function StationsPage() {
                   const total = s.total !== undefined ? s.total : (s.slots?.length || 0);
                   const liveStatus = s.status;
                 return (
-                  <Link key={s.id} href={`/stations/${s.id}`} className="card overflow-hidden hover:border-emerald-400 hover:scale-[1.02] transition group block">
+                  <Link key={s.id} href={`/stations/${s.id}`} className="card volt-line overflow-hidden hover:border-emerald-400 hover:scale-[1.02] transition group block">
                     {s.thumbnailUrl ? (
                       <div className="relative h-40 overflow-hidden bg-slate-100 dark:bg-slate-800">
                         <img src={s.thumbnailUrl} alt={s.name} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" loading="lazy" />
@@ -171,16 +212,16 @@ export default function StationsPage() {
                         {s.brand && <span className="absolute bottom-2 left-2 text-xs font-bold text-white drop-shadow-lg">{s.brand}</span>}
                       </div>
                     ) : (
-                      <div className="h-40 bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white text-5xl">⚡</div>
+                      <div className="h-40 bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white text-5xl"><Icon name="bolt" className="w-12 h-12" /></div>
                     )}
                     <div className="p-4">
                       <h3 className="font-semibold group-hover:text-emerald-600 transition mb-1 line-clamp-1">{s.name}</h3>
-                      <p className="text-xs truncate mb-2" style={{color:"var(--text-muted)"}}>📍 {s.address}</p>
+                      <p className="text-xs truncate mb-2 flex items-center gap-1" style={{color:"var(--text-muted)"}}><Icon name="mappin" className="w-3 h-3 shrink-0" /> {s.address}</p>
                       <div className="flex items-center justify-between mb-2 text-xs">
                         <div className="flex items-center gap-2">
                           {(s.rating || 0) > 0 && <span className="text-amber-500 font-semibold">★ {s.rating.toFixed(1)}</span>}
                           {s.reviewCount > 0 && <span style={{color:"var(--text-muted)"}}>({s.reviewCount})</span>}
-                          {view === "near" && s.distance && <span className="text-emerald-600 font-semibold">📍 {s.distance.toFixed(1)} km</span>}
+                          {view === "near" && s.distance && <span className="text-emerald-600 font-semibold flex items-center gap-1"><Icon name="mappin" className="w-3 h-3" /> {s.distance.toFixed(1)} km</span>}
                         </div>
                         <span style={{color:"var(--text-muted)"}}>{s.openHours || "06-22h"}</span>
                       </div>

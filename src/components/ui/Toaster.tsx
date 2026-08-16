@@ -33,13 +33,12 @@ function subscribe(listener: () => void) {
 function getSnapshot() {
   return toasts;
 }
+const emptyToasts: Toast[] = [];
 
-export function Toaster({ children }: { children: React.ReactNode }) {
-  const current = useSyncExternalStore(subscribe, getSnapshot);
+export function Toaster() {
+  const current = useSyncExternalStore(subscribe, getSnapshot, () => emptyToasts);
   return (
-    <>
-      {children}
-      <div className="fixed bottom-20 lg:bottom-6 right-4 z-[100] flex flex-col gap-2 w-[calc(100vw-2rem)] max-w-sm">
+    <div className="fixed bottom-20 lg:bottom-6 right-4 z-[100] flex flex-col gap-2 w-[calc(100vw-2rem)] max-w-sm">
         {current.map(t => (
           <div key={t.id}
             className="animate-fadeIn px-4 py-3 rounded-lg shadow-md text-sm font-medium border"
@@ -51,7 +50,6 @@ export function Toaster({ children }: { children: React.ReactNode }) {
             {t.message}
           </div>
         ))}
-      </div>
-    </>
+    </div>
   );
 }

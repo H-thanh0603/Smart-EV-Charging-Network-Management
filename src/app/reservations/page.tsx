@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import { Icon } from "@/components/ui/Icon";
+import { toast } from "@/components/ui/Toaster";
 
 const DAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
@@ -28,7 +30,7 @@ export default function ReservationsPage() {
     const token = localStorage.getItem("token");
     const res = await fetch(`/api/reservations/${id}/checkin`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
     const d = await res.json();
-    if (!res.ok) { alert(d.error); return; }
+    if (!res.ok) { toast(d.error, "error"); return; }
     router.push("/sessions");
   }
 
@@ -75,7 +77,7 @@ export default function ReservationsPage() {
                     <div key={r.id} className="card p-5">
                       <div className="flex justify-between items-start gap-4 mb-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center">📍</div>
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-emerald-600" style={{background:"var(--accent-soft)"}}><Icon name="mappin" className="w-5 h-5" /></div>
                           <div>
                             <h4 className="font-semibold text-slate-800">{r.slot.station.name}</h4>
                             <p className="text-sm text-slate-500">Trụ {r.slot.slotNumber} • {r.slot.connectorType} • {r.slot.powerKw}kW</p>
@@ -83,7 +85,7 @@ export default function ReservationsPage() {
                         </div>
                         <span className={r.status === "PENDING" ? "badge-yellow" : "badge-green"}>{r.status}</span>
                       </div>
-                      <p className="text-sm text-slate-600 mb-3">🕐 {fmt(r.startTime)} → {fmt(r.endTime)}</p>
+                      <p className="text-sm mb-3 flex items-center gap-1.5" style={{color:"var(--text-muted)"}}><Icon name="clock" className="w-3.5 h-3.5" /> {fmt(r.startTime)} → {fmt(r.endTime)}</p>
                       {r.status === "PENDING" && (
                         <button onClick={() => checkin(r.id)} className="btn-primary text-sm">Check-in ngay →</button>
                       )}
@@ -112,8 +114,8 @@ export default function ReservationsPage() {
             )}
             {reservations.length === 0 && (
               <div className="card p-12 text-center">
-                <div className="text-5xl mb-3">📅</div>
-                <p className="font-medium text-slate-700">Chưa có lịch đặt nào</p>
+                <div className="mb-3 flex justify-center"><Icon name="calendar" className="w-12 h-12 text-emerald-500" /></div>
+                <p className="font-medium">Chưa có lịch đặt nào</p>
                 <p className="text-sm text-slate-500 mt-1 mb-4">Đặt lịch để đảm bảo có chỗ sạc</p>
                 <Link href="/stations"><button className="btn-primary">Đặt lịch ngay</button></Link>
               </div>
@@ -122,12 +124,12 @@ export default function ReservationsPage() {
         ) : (
           <>
             <div className="card p-4 mb-4 bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200">
-              <p className="text-sm text-emerald-800">💡 Tự động đặt lịch lặp lại theo các ngày trong tuần. Hệ thống sẽ tạo trước 4 tuần.</p>
+              <p className="text-sm text-emerald-800">Tự động đặt lịch lặp lại theo các ngày trong tuần. Hệ thống sẽ tạo trước 4 tuần.</p>
             </div>
             {recurring.length === 0 ? (
               <div className="card p-12 text-center">
-                <div className="text-5xl mb-3">🔁</div>
-                <p className="font-medium text-slate-700">Chưa có lịch định kỳ</p>
+                <div className="mb-3 flex justify-center"><Icon name="calendar" className="w-12 h-12 text-emerald-500" /></div>
+                <p className="font-medium">Chưa có lịch định kỳ</p>
                 <p className="text-sm text-slate-500 mt-1 mb-4">Tạo lịch định kỳ khi đặt lịch để tiết kiệm thời gian</p>
                 <Link href="/stations"><button className="btn-primary">Đặt lịch định kỳ</button></Link>
               </div>
@@ -141,7 +143,7 @@ export default function ReservationsPage() {
                           <h4 className="font-semibold text-slate-800">Lịch định kỳ</h4>
                           <span className={r.active ? "badge-green" : "badge-gray"}>{r.active ? "Đang chạy" : "Đã huỷ"}</span>
                         </div>
-                        <p className="text-sm text-slate-600">⏰ {String(r.startHour).padStart(2,"0")}:00 - {String(r.endHour).padStart(2,"0")}:00</p>
+                        <p className="text-sm flex items-center gap-1.5" style={{color:"var(--text-muted)"}}><Icon name="clock" className="w-3.5 h-3.5" /> {String(r.startHour).padStart(2,"0")}:00 - {String(r.endHour).padStart(2,"0")}:00</p>
                         <div className="flex gap-1 mt-2">
                           {DAYS.map((d, i) => (
                             <span key={i} className={`w-8 h-8 flex items-center justify-center rounded-full text-xs font-medium ${r.daysOfWeek.split(",").includes(i.toString()) ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400"}`}>{d}</span>
