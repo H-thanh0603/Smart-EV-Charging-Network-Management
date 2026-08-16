@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EV Charging Network Management
 
-## Getting Started
+Hệ thống quản lý mạng lưới trạm sạc xe điện — đặt lịch, sạc, ví điện tử, tích điểm loyalty, đội xe tài xế, admin dashboard. Next.js + Prisma (SQLite/libsql) + OCPP 1.6-J.
 
-First, run the development server:
+## Tính năng
+
+- **Khách hàng:** tìm trạm theo bản đồ/khoảng cách, check-in bằng mã QR, theo dõi phiên sạc realtime, ví điện tử (nạp VNPay, VP Bank QR), voucher, tích điểm loyalty, đánh giá trạm.
+- **Tài xế (Xanh SM):** đội xe, mức tiêu hao, thu nhập.
+- **Kỹ thuật:** tiếp nhận + xử lý phiếu bảo trì trạm.
+- **Admin:** quản lý trạm/trụ, khung giá, phiếu bảo trì, voucher, doanh thu (biểu đồ), giám sát realtime (SSE), webhooks, API keys.
+- **OCPP 1.6-J:** Central System (WebSocket `:9220`) + charge point simulator, energy từ MeterValues chảy đúng pipeline tính cước + tích điểm.
+
+## Cài đặt
 
 ```bash
+npm install
+cp .env.example .env   # rồi điền DATABASE_URL, VAPID keys
+npx prisma db push
+npx prisma generate
+npx tsx prisma/seed.ts
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+DB mặc định nằm tại `prisma/dev.db` (SQLite/libsql). Override bằng `DATABASE_URL` trong `.env`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tài khoản mẫu (sau seed)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Email | Mật khẩu | Vai trò |
+|-------|----------|---------|
+| admin@evcharge.com | 123456 | Admin |
+| customer@evcharge.com | 123456 | Khách (350 pts, 500k VND) |
+| vip@evcharge.com | 123456 | VIP Gold (2,500 pts, 2M VND) |
+| tech@evcharge.com | 123456 | Kỹ thuật |
 
-## Learn More
+## Chạy cron tự huỷ đặt chỗ + nhắc sạc
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run cron:expire          # daemon, tick mỗi 60s
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Huỷ reservation `PENDING` quá 15 phút giờ bắt đầu + gửi thông báo nhắc 15 phút trước giờ sạc. Khoảng tick: `CRON_INTERVAL_MS` env (mặc định 60000). Có thể gắn vào systemd/Task Scheduler cho chạy nền lâu dài.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## OCPP (Central System + simulator)
 
-## Deploy on Vercel
+```bash
+npm run ocpp:server          # CSMS WebSocket, mặc định :9220 (OCPP_PORT)
+npm run ocpp:sim             # simulator — tự chọn 1 station + khách hàng từ DB
+npm run ocpp:sim -- "<stationId>" customer@evcharge.com
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Flow: `BootNotification → StatusNotification → StartTransaction → MeterValues×N → StopTransaction`. Sau khi chạy, xem hóa đơn + loyalty mới và `/admin/live`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Tài liệu
+
+- `GIOI_THIEU_DO_AN.md` — giới thiệu, phạm vi, mô hình nghiệp vụ.
+- `MO_HINH_HOA_YEU_CAU.md` — use case, lớp, hoạt động, sequence (tạo bằng scripts/`gen_*.py`).
+- `PHAN_TICH_THIET_KE_HE_THONG.md` — phân tích + thiết kế hệ thống.
+- `SETUP.md` — hướng dẫn cài đặt chi tiết + test card VNPay + voucher demo.
+
+## Scripts
+
+`npm run dev` · `npm run build` · `npm run start` · `npm run cron:expire` · `npm run ocpp:server` · `npm run ocpp:sim`
