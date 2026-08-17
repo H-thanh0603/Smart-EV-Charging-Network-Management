@@ -67,3 +67,4 @@ dev-server*.log
 # Python cache (diagram generator scripts)
 __pycache__/
 *.pyc
+.claude/settings.local.json*
