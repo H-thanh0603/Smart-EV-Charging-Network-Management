@@ -23,19 +23,19 @@ async function main() {
   });
 
   // ── USERS ──
-  await prisma.user.upsert({ where: { email: "admin@evcharge.com" }, update: {}, create: { email: "admin@evcharge.com", password: pw, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin&backgroundColor=b6e3f4", name: "Admin V-GREEN", role: "ADMIN" } });
-  const customer = await prisma.user.upsert({ where: { email: "customer@evcharge.com" }, update: {}, create: { email: "customer@evcharge.com", password: pw, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=NguyenVanA&backgroundColor=c0aede", name: "Nguyen Van A", phone: "0901234567", role: "CUSTOMER", loyaltyPoints: 350, loyaltyTier: "BRONZE" } });
-  const vip = await prisma.user.upsert({ where: { email: "vip@evcharge.com" }, update: {}, create: { email: "vip@evcharge.com", password: pw, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=TranThiVip&backgroundColor=ffd5dc", name: "Tran Thi Vip", phone: "0908889999", role: "CUSTOMER", loyaltyPoints: 2500, loyaltyTier: "GOLD" } });
+  await prisma.user.upsert({ where: { email: "admin@evcharge.com" }, update: {}, create: { email: "admin@evcharge.com", password: pw, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin&backgroundColor=b6e3f4", name: "Admin V-GREEN", role: "ADMIN", emailVerified: true } });
+  const customer = await prisma.user.upsert({ where: { email: "customer@evcharge.com" }, update: {}, create: { email: "customer@evcharge.com", password: pw, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=NguyenVanA&backgroundColor=c0aede", name: "Nguyen Van A", phone: "0901234567", role: "CUSTOMER", loyaltyPoints: 350, loyaltyTier: "BRONZE", emailVerified: true } });
+  const vip = await prisma.user.upsert({ where: { email: "vip@evcharge.com" }, update: {}, create: { email: "vip@evcharge.com", password: pw, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=TranThiVip&backgroundColor=ffd5dc", name: "Tran Thi Vip", phone: "0908889999", role: "CUSTOMER", loyaltyPoints: 2500, loyaltyTier: "GOLD", emailVerified: true } });
   const driver1 = await prisma.user.upsert({
     where: { email: "driver@xanhsm.com" }, update: {},
-    create: { email: "driver@xanhsm.com", password: pw, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=LeVanTai&backgroundColor=d1d4f9", name: "Le Van Tai (Xanh SM)", phone: "0911223344", role: "DRIVER", loyaltyPoints: 5800, loyaltyTier: "PLATINUM", fleetId: xanhSM.id }
+    create: { email: "driver@xanhsm.com", password: pw, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=LeVanTai&backgroundColor=d1d4f9", name: "Le Van Tai (Xanh SM)", phone: "0911223344", role: "DRIVER", loyaltyPoints: 5800, loyaltyTier: "PLATINUM", fleetId: xanhSM.id, emailVerified: true }
   });
   const driver2 = await prisma.user.upsert({
     where: { email: "driver2@xanhsm.com" }, update: {},
-    create: { email: "driver2@xanhsm.com", password: pw, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=PhamQuocHung&backgroundColor=ffdfbf", name: "Pham Quoc Hung (Xanh SM)", phone: "0922334455", role: "DRIVER", loyaltyPoints: 3200, loyaltyTier: "GOLD", fleetId: xanhSM.id }
+    create: { email: "driver2@xanhsm.com", password: pw, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=PhamQuocHung&backgroundColor=ffdfbf", name: "Pham Quoc Hung (Xanh SM)", phone: "0922334455", role: "DRIVER", loyaltyPoints: 3200, loyaltyTier: "GOLD", fleetId: xanhSM.id, emailVerified: true }
   });
-  await prisma.user.upsert({ where: { email: "tech@evcharge.com" }, update: {}, create: { email: "tech@evcharge.com", password: pw, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=TranThiB&backgroundColor=fde68a", name: "Tran Thi B", phone: "0907654321", role: "TECHNICIAN" } });
-  await prisma.user.upsert({ where: { email: "tech2@evcharge.com" }, update: {}, create: { email: "tech2@evcharge.com", password: pw, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=LeVanC&backgroundColor=fecaca", name: "Le Van C", phone: "0903334444", role: "TECHNICIAN" } });
+  await prisma.user.upsert({ where: { email: "tech@evcharge.com" }, update: {}, create: { email: "tech@evcharge.com", password: pw, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=TranThiB&backgroundColor=fde68a", name: "Tran Thi B", phone: "0907654321", role: "TECHNICIAN", emailVerified: true } });
+  await prisma.user.upsert({ where: { email: "tech2@evcharge.com" }, update: {}, create: { email: "tech2@evcharge.com", password: pw, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=LeVanC&backgroundColor=fecaca", name: "Le Van C", phone: "0903334444", role: "TECHNICIAN", emailVerified: true } });
 
   // ── VEHICLES ──
   const vehicleData = [

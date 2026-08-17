@@ -5,10 +5,13 @@ import { useParams } from "next/navigation";
 export default function InvoicePrintPage() {
   const params = useParams();
   const [data, setData] = useState<any>(null);
+  const [einvoice, setEinvoice] = useState<any>(null);
 
   useEffect(() => {
     fetch(`/api/invoices/${params.id}/pdf`)
       .then(r => r.json()).then(d => setData(d));
+    fetch(`/api/invoices/${params.id}/einvoice`)
+      .then(r => r.json()).then(d => setEinvoice(d)).catch(() => {});
   }, [params.id]);
 
   function handlePrint() { window.print(); }
@@ -21,7 +24,12 @@ export default function InvoicePrintPage() {
       <div className="max-w-2xl mx-auto bg-white">
         <div className="mb-6 no-print flex justify-between items-center">
           <a href="/invoices" className="text-emerald-600 hover:underline text-sm">← Quay lại hoá đơn</a>
-          <button onClick={handlePrint} className="btn-primary">🖨 In / Lưu PDF</button>
+          <div className="flex items-center gap-2">
+            {einvoice && (
+              <a href={`/api/invoices/${params.id}/einvoice?format=xml`} className="btn border">⬇ XML HĐĐT</a>
+            )}
+            <button onClick={handlePrint} className="btn-primary">🖨 In / Lưu PDF</button>
+          </div>
         </div>
 
         <div className="border-2 border-slate-200 rounded-2xl p-8 print:border-0 print:p-4">
@@ -127,6 +135,24 @@ export default function InvoicePrintPage() {
             <p className="mb-1">Cảm ơn quý khách đã sử dụng EV Charge.</p>
             <p>Mọi thắc mắc liên hệ: support@evcharge.com</p>
           </div>
+
+          {einvoice && (
+            <div className="mt-6 pt-4 border-t border-slate-200 no-print">
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Hoá đơn điện tử (NĐ123)</p>
+              <p className="text-xs text-slate-500 mb-3">Bản demo — chưa ký số, chưa có mã của cơ quan thuế.</p>
+              <div className="flex items-center justify-center gap-3">
+                <div className="bg-white border border-slate-200 rounded-lg p-2">
+                  <svg viewBox="0 0 80 80" className="w-24 h-24">
+                    {einvoice.qr && [...einvoice.qr].map((ch, i) => {
+                      const x = (i % 8) * 10 + 5, y = Math.floor(i / 8) * 10 + 5;
+                      return ch.charCodeAt(0) % 2 ? <rect key={i} x={x} y={y} width={8} height={8} fill="#000" /> : null;
+                    })}
+                  </svg>
+                </div>
+              </div>
+              <p className="font-mono text-[10px] text-slate-400 text-center mt-2 truncate">{einvoice.qr}</p>
+            </div>
+          )}
         </div>
       </div>
 

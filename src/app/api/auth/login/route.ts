@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
     if (!user || user.deletedAt) return NextResponse.json({ error: "Sai email hoặc mật khẩu" }, { status: 401 });
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return NextResponse.json({ error: "Sai email hoặc mật khẩu" }, { status: 401 });
+    if (!user.emailVerified) return NextResponse.json({ error: "Vui lòng xác minh email trước khi đăng nhập" }, { status: 403 });
     const token = signToken({ id: user.id, email: user.email, role: user.role });
 
     const response = NextResponse.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });

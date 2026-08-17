@@ -21,7 +21,7 @@ export default function RegisterPage() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) { setError(data.error); return; }
-    router.push("/login");
+    router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
   }
 
   return (

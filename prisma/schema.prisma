@@ -17,6 +17,8 @@ model User {
   loyaltyPoints Int  @default(0)
   loyaltyTier   String @default("BRONZE")
   emailVerified Boolean @default(false)
+  verifyToken    String?
+  verifyTokenExp DateTime?
   resetToken    String?
   resetTokenExp DateTime?
   theme         String  @default("light")

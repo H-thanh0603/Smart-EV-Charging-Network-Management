@@ -7,6 +7,46 @@ export function tierFromPoints(points: number) {
   return "BRONZE";
 }
 
+type TariffShape = { startHour: number; endHour: number; ratePerKwh: number };
+const FALLBACK_RATE = 3210;
+
+/**
+ * Tính cước theo khung giờ khi session trải qua nhiều tariff (vd 22h→6h xuyên đêm).
+ * Chia khoảng [start, end] thành các phân đoạn theo ranh giới giờ nguyên, prorate
+ * năng lượng theo tỷ lệ thời gian mỗi đoạn. Guard 96 vòng = tối đa 96 giờ session.
+ */
+export function computeEnergyCost(
+  tariffs: TariffShape[],
+  start: Date,
+  end: Date,
+  totalKwh: number
+): number {
+  if (tariffs.length === 0 || end <= start) {
+    return Math.round(totalKwh * FALLBACK_RATE);
+  }
+  const rateAt = (hour: number) => {
+    const t = tariffs.find((t) => hour >= t.startHour && hour < t.endHour);
+    return t?.ratePerKwh ?? null;
+  };
+  let subtotal = 0;
+  let cur = start.getTime();
+  const endMs = end.getTime();
+  const totalMs = endMs - cur;
+  let guard = 0;
+  while (cur < endMs && guard < 96) {
+    const d = new Date(cur);
+    const rate = rateAt(d.getHours()) ?? FALLBACK_RATE;
+    const next = new Date(d);
+    next.setHours(d.getHours() + 1, 0, 0, 0); // boundary đầu giờ kế tiếp (setHours tự rollover ngày)
+    const sliceEnd = Math.min(next.getTime(), endMs);
+    const sliceMs = sliceEnd - cur;
+    subtotal += totalKwh * (sliceMs / totalMs) * rate;
+    cur = sliceEnd;
+    guard++;
+  }
+  return Math.round(subtotal);
+}
+
 export type FinalizeResult = {
   session: { id: string; status: string };
   invoice: {
@@ -57,13 +97,9 @@ export async function finalizeSession(
       ? +opts.energyKwhOverride.toFixed(3)
       : +(durationHours * session.slot.powerKw * 0.9).toFixed(3);
 
-  const hour = endTime.getHours();
-  const tariff = await prisma.tariff.findFirst({
-    where: { active: true, startHour: { lte: hour }, endHour: { gt: hour } },
-    orderBy: { isPeak: "desc" },
-  });
-  const ratePerKwh = tariff?.ratePerKwh || 3210;
-  const subtotal = +(energyKwh * ratePerKwh).toFixed(0);
+  // Tariff chia theo khung giờ — prorate năng lượng theo thời gian mỗi đoạn
+  const tariffs = await prisma.tariff.findMany({ where: { active: true } });
+  const subtotal = computeEnergyCost(tariffs, new Date(session.startTime), endTime, energyKwh);
 
   // Chiết khấu fleet (vd: tài xế Xanh SM)
   const fleetDiscountRate = session.user.fleet?.discountRate || 0;

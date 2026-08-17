@@ -1,8 +1,31 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { prisma } from "../src/lib/prisma";
-import { finalizeSession } from "../src/lib/session";
+import { finalizeSession, computeEnergyCost } from "../src/lib/session";
 import { resetDb, seedUser, seedStation, seedSlot, seedTariff } from "./helpers";
+
+test("computeEnergyCost prorate xuyên khung giờ", () => {
+  const tariffs = [
+    { startHour: 22, endHour: 24, ratePerKwh: 2570 },
+    { startHour: 0, endHour: 6, ratePerKwh: 2570 },
+    { startHour: 6, endHour: 9, ratePerKwh: 3210 },
+    { startHour: 9, endHour: 11, ratePerKwh: 4580 },
+    { startHour: 11, endHour: 17, ratePerKwh: 3210 },
+    { startHour: 17, endHour: 22, ratePerKwh: 4580 },
+  ];
+  // 22:00 → 02:00 hôm sau, 4h, đều giá đêm 2570 → 10 kWh * 2570 = 25700
+  const start = new Date("2026-08-17T22:00:00");
+  const end = new Date("2026-08-18T02:00:00");
+  assert.equal(computeEnergyCost(tariffs, start, end, 10), 25700);
+
+  // 21:00 → 23:00, 2h. 1h giá 4580 (21-22), 1h giá 2570 (22-23). 10 kWh → 5*4580 + 5*2570 = 35750
+  const s2 = new Date("2026-08-17T21:00:00");
+  const e2 = new Date("2026-08-17T23:00:00");
+  assert.equal(computeEnergyCost(tariffs, s2, e2, 10), 35750);
+
+  // Không tariff → fallback 3210
+  assert.equal(computeEnergyCost([], start, end, 10), 32100);
+});
 
 async function seedActiveSession() {
   const user = await seedUser();
