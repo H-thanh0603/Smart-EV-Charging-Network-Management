@@ -11,17 +11,15 @@ export default function AdminVouchersPage() {
   const [form, setForm] = useState({ code: "", name: "", description: "", type: "PERCENT", value: 10, minAmount: 0, maxDiscount: 50000, usageLimit: 100, perUserLimit: 1, validFrom: today, validUntil: next30 });
 
   async function load() {
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/vouchers", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch("/api/vouchers");
     setVouchers(await res.json()); setLoading(false);
   }
 
   useEffect(() => { load(); }, []);
 
   async function create() {
-    const token = localStorage.getItem("token");
     const res = await fetch("/api/vouchers", {
-      method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)
     });
     if (res.ok) { setShowForm(false); setForm({...form, code: "", name: "", description: ""}); load(); }
@@ -29,15 +27,13 @@ export default function AdminVouchersPage() {
   }
 
   async function toggle(id: string, active: boolean) {
-    const token = localStorage.getItem("token");
-    await fetch(`/api/vouchers/${id}`, { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ active: !active }) });
+    await fetch(`/api/vouchers/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ active: !active }) });
     load();
   }
 
   async function del(id: string) {
     if (!confirm("Xoá voucher này?")) return;
-    const token = localStorage.getItem("token");
-    await fetch(`/api/vouchers/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    await fetch(`/api/vouchers/${id}`, { method: "DELETE" });
     load();
   }
 

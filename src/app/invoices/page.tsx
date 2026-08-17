@@ -1,20 +1,25 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 
+const LIMIT = 20;
+
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showPay, setShowPay] = useState<string | null>(null);
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherInfo, setVoucherInfo] = useState<any>(null);
   const [voucherError, setVoucherError] = useState("");
+  const pageRef = useRef(1);
 
-  async function load() {
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/invoices", { headers: { Authorization: `Bearer ${token}` } });
-    setInvoices(await res.json()); setLoading(false);
+  async function load(p = 1, append = false) {
+    const res = await fetch(`/api/invoices?page=${p}&limit=${LIMIT}`);
+    const d = await res.json();
+    setInvoices(prev => append ? [...prev, ...d.items] : d.items);
+    setTotal(d.total); pageRef.current = p; setLoading(false);
   }
 
   useEffect(() => { load(); }, []);
@@ -22,9 +27,8 @@ export default function InvoicesPage() {
   async function checkVoucher(amount: number) {
     setVoucherError(""); setVoucherInfo(null);
     if (!voucherCode) return;
-    const token = localStorage.getItem("token");
     const res = await fetch("/api/vouchers/validate", {
-      method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code: voucherCode, amount })
     });
     const d = await res.json();
@@ -33,9 +37,8 @@ export default function InvoicesPage() {
   }
 
   async function pay(id: string) {
-    const token = localStorage.getItem("token");
     const res = await fetch(`/api/invoices/${id}/pay`, {
-      method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ method: "wallet", voucherCode: voucherInfo ? voucherCode : undefined })
     });
     const d = await res.json();
@@ -49,7 +52,7 @@ export default function InvoicesPage() {
   return (
     <AppShell title="Hoá đơn">
       <div className="max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6">Hoá đơn ({invoices.length})</h2>
+        <h2 className="text-2xl font-bold mb-6">Hoá đơn ({invoices.length}/{total})</h2>
 
         {loading ? <div className="skeleton h-32"></div> : invoices.length === 0 ? (
           <div className="card p-12 text-center"><div className="text-5xl mb-3">🧾</div><p style={{color:"var(--text-muted)"}}>Chưa có hoá đơn nào</p></div>
@@ -100,6 +103,9 @@ export default function InvoicesPage() {
                 </div>
               );
             })}
+            {invoices.length < total && (
+              <button onClick={() => load(pageRef.current + 1, true)} className="btn-secondary w-full">Tải thêm</button>
+            )}
           </div>
         )}
       </div>

@@ -7,8 +7,7 @@ export default function InvoicePrintPage() {
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch(`/api/invoices/${params.id}/pdf`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`/api/invoices/${params.id}/pdf`)
       .then(r => r.json()).then(d => setData(d));
   }, [params.id]);
 

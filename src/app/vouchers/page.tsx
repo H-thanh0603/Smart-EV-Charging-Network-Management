@@ -9,8 +9,7 @@ export default function VouchersPage() {
   const [copied, setCopied] = useState("");
 
   async function load() {
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/vouchers", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch("/api/vouchers");
     setVouchers(await res.json()); setLoading(false);
   }
 

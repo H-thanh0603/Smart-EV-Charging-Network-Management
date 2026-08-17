@@ -92,6 +92,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         },
       });
       if (appliedVoucher) {
+        // Re-check perUserLimit trong tx: check ngoài tx race khi 2 invoice song song cùng user
+        const userUsage = await tx.voucherUsage.count({ where: { voucherId: appliedVoucher.id, userId: u.id } });
+        if (userUsage >= appliedVoucher.perUserLimit) throw new Error("VOUCHER_USER_LIMIT");
         // Chống double-submit: chỉ tăng usedCount khi chưa đụng usageLimit
         if (appliedVoucher.usageLimit) {
           const bumped = await tx.voucher.updateMany({
@@ -130,6 +133,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: "Không đủ điểm để quy đổi" }, { status: 400 });
     if (e?.message === "VOUCHER_LIMIT")
       return NextResponse.json({ error: "Mã đã hết lượt sử dụng" }, { status: 400 });
+    if (e?.message === "VOUCHER_USER_LIMIT")
+      return NextResponse.json({ error: "Bạn đã đạt giới hạn sử dụng mã này" }, { status: 400 });
     if (e?.message === "INSUFFICIENT_BALANCE")
       return NextResponse.json({ error: "Số dư ví không đủ" }, { status: 400 });
     return NextResponse.json({ error: "Lỗi thanh toán" }, { status: 500 });

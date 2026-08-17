@@ -8,8 +8,7 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("/api/sessions/stats", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/sessions/stats")
       .then(r => r.json()).then(d => {
         setData(d.data);
         setStats({ totalEnergy: d.totalEnergy, totalSessions: d.totalSessions });

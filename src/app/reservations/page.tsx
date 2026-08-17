@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
@@ -7,28 +7,32 @@ import { Icon } from "@/components/ui/Icon";
 import { toast } from "@/components/ui/Toaster";
 
 const DAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+const LIMIT = 20;
 
 export default function ReservationsPage() {
   const router = useRouter();
   const [tab, setTab] = useState<"single" | "recurring">("single");
   const [reservations, setReservations] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
   const [recurring, setRecurring] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const pageRef = useRef(1);
 
-  async function load() {
-    const token = localStorage.getItem("token");
+  async function load(p = 1, append = false) {
     const [r1, r2] = await Promise.all([
-      fetch("/api/reservations", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch("/api/reservations/recurring", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => [])
+      fetch(`/api/reservations?page=${p}&limit=${LIMIT}`).then(r => r.json()),
+      append ? Promise.resolve(null) : fetch("/api/reservations/recurring").then(r => r.json()).catch(() => [])
     ]);
-    setReservations(r1); setRecurring(r2); setLoading(false);
+    setReservations(prev => append ? [...prev, ...r1.items] : r1.items);
+    setTotal(r1.total); pageRef.current = p;
+    if (r2 !== null) setRecurring(r2);
+    setLoading(false);
   }
 
   useEffect(() => { load(); }, []);
 
   async function checkin(id: string) {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`/api/reservations/${id}/checkin`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`/api/reservations/${id}/checkin`, { method: "POST" });
     const d = await res.json();
     if (!res.ok) { toast(d.error, "error"); return; }
     router.push("/sessions");
@@ -36,8 +40,7 @@ export default function ReservationsPage() {
 
   async function cancelRecurring(id: string) {
     if (!confirm("Huỷ lịch định kỳ này? Các lịch chưa diễn ra sẽ bị huỷ.")) return;
-    const token = localStorage.getItem("token");
-    await fetch(`/api/reservations/recurring/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    await fetch(`/api/reservations/recurring/${id}`, { method: "DELETE" });
     load();
   }
 
@@ -111,6 +114,9 @@ export default function ReservationsPage() {
                   ))}
                 </div>
               </div>
+            )}
+            {reservations.length < total && (
+              <button onClick={() => load(pageRef.current + 1, true)} className="btn-secondary w-full mb-8">Tải thêm</button>
             )}
             {reservations.length === 0 && (
               <div className="card p-12 text-center">

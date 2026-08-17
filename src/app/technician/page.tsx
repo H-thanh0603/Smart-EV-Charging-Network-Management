@@ -9,10 +9,9 @@ export default function TechnicianDashboard() {
   const [loading, setLoading] = useState(true);
 
   async function load() {
-    const token = localStorage.getItem("token");
     const [tickets, stations] = await Promise.all([
-      fetch("/api/maintenance", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch("/api/stations/live", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch("/api/maintenance").then(r => r.json()),
+      fetch("/api/stations/live").then(r => r.json()),
     ]);
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const myTickets = Array.isArray(tickets) ? tickets.filter((t: any) => t.assignedToId === user.id) : [];

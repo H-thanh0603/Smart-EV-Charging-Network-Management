@@ -28,18 +28,17 @@ export default function CustomerShell({ children, title, user }: { children: Rea
   const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("/api/notifications", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/notifications")
       .then(r => r.json()).then(d => setUnreadCount(Array.isArray(d) ? d.filter((n: any) => !n.read).length : 0))
       .catch(() => {});
-    fetch("/api/wallet", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/wallet")
       .then(r => r.json()).then(d => setWalletBalance(d.wallet?.balance || 0))
       .catch(() => {});
   }, []);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {});
-    localStorage.removeItem("token"); localStorage.removeItem("user");
+    localStorage.removeItem("user");
     router.push("/login");
   }
 

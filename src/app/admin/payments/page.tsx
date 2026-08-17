@@ -1,22 +1,29 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
 
+const LIMIT = 50;
+
 export default function AdminPaymentsPage() {
-  const [data, setData] = useState<any>({ payments: [], totals: { successAmount: 0, successCount: 0 } });
+  const [data, setData] = useState<any>({ payments: [], total: 0, totals: { successAmount: 0, successCount: 0 } });
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
+  const pageRef = useRef(1);
 
-  async function load() {
+  async function load(p = 1, append = false) {
     setLoading(true);
-    const token = localStorage.getItem("token");
-    const url = filter ? `/api/admin/payments?status=${filter}` : "/api/admin/payments";
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    if (res.ok) setData(await res.json());
+    const qs = new URLSearchParams({ page: String(p), limit: String(LIMIT) });
+    if (filter) qs.set("status", filter);
+    const res = await fetch(`/api/admin/payments?${qs}`);
+    if (res.ok) {
+      const d = await res.json();
+      if (append) d.payments = [...data.payments, ...d.payments];
+      setData(d); pageRef.current = p;
+    }
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, [filter]);
+  useEffect(() => { load(1); }, [filter]);
 
   const fmtVnd = (n: number) => n.toLocaleString("vi-VN") + " ₫";
   const fmtDate = (s: string) => new Date(s).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
@@ -49,7 +56,7 @@ export default function AdminPaymentsPage() {
           </div>
           <div className="card p-4">
             <div className="text-xs text-slate-500 uppercase">Hiển thị</div>
-            <div className="text-2xl font-bold text-slate-800 mt-1">{data.payments.length}</div>
+            <div className="text-2xl font-bold text-slate-800 mt-1">{data.payments.length}/{data.total}</div>
           </div>
         </div>
 
@@ -90,6 +97,11 @@ export default function AdminPaymentsPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          {!loading && data.payments.length < data.total && (
+            <div className="p-4 border-t border-slate-100">
+              <button onClick={() => load(pageRef.current + 1, true)} className="btn-secondary w-full">Tải thêm</button>
             </div>
           )}
         </div>

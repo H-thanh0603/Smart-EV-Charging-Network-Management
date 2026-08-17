@@ -9,26 +9,23 @@ export default function AdminReviewsPage() {
 
   async function load() {
     setLoading(true);
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/admin/reviews", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch("/api/admin/reviews");
     if (res.ok) setReviews(await res.json());
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
 
   async function toggleVerify(id: string, verified: boolean) {
-    const token = localStorage.getItem("token");
     await fetch(`/api/admin/reviews/${id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ verified: !verified }),
     });
     load();
   }
   async function remove(id: string) {
     if (!confirm("Xoá review này?")) return;
-    const token = localStorage.getItem("token");
-    await fetch(`/api/admin/reviews/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    await fetch(`/api/admin/reviews/${id}`, { method: "DELETE" });
     load();
   }
 

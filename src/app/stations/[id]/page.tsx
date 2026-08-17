@@ -16,11 +16,10 @@ export default function StationDetailPage() {
   const [reviewError, setReviewError] = useState("");
 
   async function load() {
-    const token = localStorage.getItem("token");
     const [sRes, rRes, sessRes] = await Promise.all([
       fetch(`/api/stations/${params.id}`).then(r => r.json()),
       fetch(`/api/stations/${params.id}/reviews`).then(r => r.json()),
-      fetch("/api/sessions", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => [])
+      fetch("/api/sessions").then(r => r.json()).catch(() => [])
     ]);
     setStation(sRes); setReviews(rRes);
     // Check if user has completed session at this station
@@ -33,10 +32,9 @@ export default function StationDetailPage() {
 
   async function submitReview() {
     setReviewError("");
-    const token = localStorage.getItem("token");
     const res = await fetch(`/api/stations/${params.id}/reviews`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rating: reviewRating, comment: reviewComment })
     });
     const d = await res.json();

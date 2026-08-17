@@ -40,8 +40,19 @@ export async function getLiveStations(): Promise<LiveStation[]> {
     },
   });
 
-  return Promise.all(
-    stations.map(async (s) => {
+  // 1 query cho toàn bộ session ACTIVE, group theo slotId — bỏ N+1 query-per-station
+  const allActive = await prisma.chargingSession.findMany({
+    where: { status: "ACTIVE" },
+    select: { slotId: true, startTime: true, slot: { select: { powerKw: true, slotNumber: true } } },
+  });
+  const bySlot = new Map<string, typeof allActive>();
+  for (const ses of allActive) {
+    const list = bySlot.get(ses.slotId) ?? [];
+    list.push(ses);
+    bySlot.set(ses.slotId, list);
+  }
+
+  return stations.map((s) => {
       // OCCUPIED và CHARGING đều tính là đang bận
       const busyStatuses = ["OCCUPIED", "CHARGING"];
       const available = s.slots.filter((sl) => sl.status === "AVAILABLE").length;
@@ -49,10 +60,7 @@ export async function getLiveStations(): Promise<LiveStation[]> {
       const maintenance = s.slots.filter((sl) => sl.status === "MAINTENANCE").length;
       const total = s.slots.length;
 
-      const activeSessions = await prisma.chargingSession.findMany({
-        where: { slotId: { in: s.slots.map((sl) => sl.id) }, status: "ACTIVE" },
-        select: { id: true, slotId: true, startTime: true, slot: { select: { powerKw: true, slotNumber: true } } },
-      });
+      const activeSessions = s.slots.flatMap((sl) => bySlot.get(sl.id) ?? []);
 
       const sessionInfo = activeSessions.map((ses) => {
         const elapsedMin = Math.floor((Date.now() - new Date(ses.startTime).getTime()) / 60000);
@@ -87,6 +95,5 @@ export async function getLiveStations(): Promise<LiveStation[]> {
         activeSessions: sessionInfo,
         status: available === 0 ? "FULL" : available <= 2 ? "BUSY" : "FREE",
       };
-    })
-  );
+  });
 }

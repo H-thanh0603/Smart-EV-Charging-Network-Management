@@ -25,10 +25,9 @@ export default function AdminUsersPage() {
 
   async function load() {
     setLoading(true);
-    const token = localStorage.getItem("token");
     const [r1, r2] = await Promise.all([
-      fetch("/api/admin/users", { headers: { Authorization: `Bearer ${token}` } }),
-      fetch("/api/admin/fleets", { headers: { Authorization: `Bearer ${token}` } }).catch(() => null)
+      fetch("/api/admin/users"),
+      fetch("/api/admin/fleets").catch(() => null)
     ]);
     setUsers(await r1.json());
     if (r2 && r2.ok) setFleets(await r2.json());
@@ -44,10 +43,9 @@ export default function AdminUsersPage() {
   }
 
   async function save() {
-    const token = localStorage.getItem("token");
     const res = await fetch("/api/admin/users", {
       method: editing ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)
     });
     if (res.ok) { setShowForm(false); load(); }
@@ -56,9 +54,8 @@ export default function AdminUsersPage() {
 
   async function remove(id: string, name: string) {
     if (!confirm(`Xoá user "${name}"?`)) return;
-    const token = localStorage.getItem("token");
     const res = await fetch(`/api/admin/users?id=${id}`, {
-      method: "DELETE", headers: { Authorization: `Bearer ${token}` }
+      method: "DELETE"
     });
     if (res.ok) load();
     else { const d = await res.json(); alert(d.error || "Lỗi"); }

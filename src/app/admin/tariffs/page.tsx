@@ -15,10 +15,9 @@ export default function AdminTariffsPage() {
   useEffect(() => { load(); }, []);
 
   async function create() {
-    const token = localStorage.getItem("token");
     const res = await fetch("/api/tariffs", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)
     });
     if (res.ok) { setForm({ name: "", startHour: 0, endHour: 6, ratePerKwh: 2000, isPeak: false, active: true }); load(); }
@@ -26,8 +25,7 @@ export default function AdminTariffsPage() {
 
   async function del(id: string) {
     if (!confirm("Xoá tariff này?")) return;
-    const token = localStorage.getItem("token");
-    await fetch(`/api/tariffs/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    await fetch(`/api/tariffs/${id}`, { method: "DELETE" });
     load();
   }
 

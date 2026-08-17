@@ -10,12 +10,11 @@ export default function DriverDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   async function loadAll() {
-    const token = localStorage.getItem("token");
     const [w, s, v, sugg] = await Promise.all([
-      fetch("/api/wallet", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch("/api/sessions", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch("/api/vehicles", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch("/api/stations/suggest", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch("/api/wallet").then(r => r.json()),
+      fetch("/api/sessions").then(r => r.json()),
+      fetch("/api/vehicles").then(r => r.json()),
+      fetch("/api/stations/suggest").then(r => r.json()),
     ]);
     const completed = Array.isArray(s) ? s.filter((x: any) => x.status === "COMPLETED") : [];
     const active = Array.isArray(s) ? s.find((x: any) => x.status === "ACTIVE") : null;

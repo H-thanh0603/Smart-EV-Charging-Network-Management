@@ -21,18 +21,16 @@ export default function DriverVehiclesPage() {
   const [form, setForm] = useState({ brand: "VinFast", model: "VF 5", licensePlate: "", connectorType: "CCS2", batteryKwh: 37.2, vinNumber: "" });
 
   async function load() {
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/vehicles", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch("/api/vehicles");
     setVehicles(await res.json()); setLoading(false);
   }
 
   useEffect(() => { load(); }, []);
 
   async function create() {
-    const token = localStorage.getItem("token");
     const res = await fetch("/api/vehicles", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)
     });
     if (res.ok) { setShowForm(false); setForm({...form, licensePlate: "", vinNumber: ""}); load(); }

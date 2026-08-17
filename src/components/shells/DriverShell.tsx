@@ -19,8 +19,7 @@ export default function DriverShell({ children, title, user }: { children: React
   const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("/api/wallet", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/wallet")
       .then(r => r.json()).then(d => setStats({ balance: d.wallet?.balance || 0 }))
       .catch(() => {});
   }, []);

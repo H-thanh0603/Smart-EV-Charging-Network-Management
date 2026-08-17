@@ -14,10 +14,9 @@ export default function AdminWebhooksPage() {
   const [newKey, setNewKey] = useState<string | null>(null);
 
   async function load() {
-    const token = localStorage.getItem("token");
     const [w, k] = await Promise.all([
-      fetch("/api/webhooks", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch("/api/apikeys", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch("/api/webhooks").then(r => r.json()),
+      fetch("/api/apikeys").then(r => r.json()),
     ]);
     setWebhooks(w); setKeys(k); setLoading(false);
   }
@@ -25,10 +24,9 @@ export default function AdminWebhooksPage() {
   useEffect(() => { load(); }, []);
 
   async function createWh() {
-    const token = localStorage.getItem("token");
     const res = await fetch("/api/webhooks", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(whForm)
     });
     if (res.ok) { setShowWh(false); setWhForm({ name: "", url: "", events: "session.end,invoice.paid" }); load(); }
@@ -36,26 +34,23 @@ export default function AdminWebhooksPage() {
 
   async function delWh(id: string) {
     if (!confirm("Xoá webhook này?")) return;
-    const token = localStorage.getItem("token");
-    await fetch(`/api/webhooks/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    await fetch(`/api/webhooks/${id}`, { method: "DELETE" });
     load();
   }
 
   async function toggleWh(id: string, active: boolean) {
-    const token = localStorage.getItem("token");
     await fetch(`/api/webhooks/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ active: !active })
     });
     load();
   }
 
   async function createKey() {
-    const token = localStorage.getItem("token");
     const res = await fetch("/api/apikeys", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(keyForm)
     });
     if (res.ok) {
@@ -68,8 +63,7 @@ export default function AdminWebhooksPage() {
 
   async function delKey(id: string) {
     if (!confirm("Xoá API key này? Đối tác sẽ không thể truy cập nữa.")) return;
-    const token = localStorage.getItem("token");
-    await fetch(`/api/apikeys/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    await fetch(`/api/apikeys/${id}`, { method: "DELETE" });
     load();
   }
 

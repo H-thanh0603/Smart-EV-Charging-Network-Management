@@ -12,7 +12,9 @@ export async function POST(req: NextRequest) {
 
   const token = crypto.randomBytes(32).toString("hex");
   const exp = new Date(Date.now() + 60 * 60 * 1000); // 1h
-  await prisma.user.update({ where: { id: user.id }, data: { resetToken: token, resetTokenExp: exp } });
+  // Chỉ lưu hash — DB leak không lộ token reset
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  await prisma.user.update({ where: { id: user.id }, data: { resetToken: tokenHash, resetTokenExp: exp } });
 
   // Tránh lộ token cho attacker: chỉ trả link trong dev. Production phải gửi email/SMS.
   const resetUrl = `${req.nextUrl.origin}/reset-password?token=${token}`;

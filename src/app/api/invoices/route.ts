@@ -5,10 +5,23 @@ export async function GET(req: NextRequest) {
   const token = getTokenFromRequest(req);
   const user = token ? verifyToken(token) : null;
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const invoices = await prisma.invoice.findMany({
-    where: user.role === "ADMIN" ? {} : { userId: user.id },
-    include: { session: { include: { slot: { include: { station: { select: { name: true } } } } } } },
-    orderBy: { createdAt: "desc" }
-  });
-  return NextResponse.json(invoices);
+  const where = user.role === "ADMIN" ? {} : { userId: user.id };
+  const include = { session: { include: { slot: { include: { station: { select: { name: true } } } } } } };
+  const orderBy = { createdAt: "desc" as const };
+
+  // Không ?page → trả toàn bộ (backward-compat)
+  const url = new URL(req.url);
+  const pageParam = url.searchParams.get("page");
+  if (!pageParam) {
+    const invoices = await prisma.invoice.findMany({ where, include, orderBy });
+    return NextResponse.json(invoices);
+  }
+
+  const page = Math.max(parseInt(pageParam) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") || "20") || 20, 1), 100);
+  const [items, total] = await Promise.all([
+    prisma.invoice.findMany({ where, include, orderBy, skip: (page - 1) * limit, take: limit }),
+    prisma.invoice.count({ where }),
+  ]);
+  return NextResponse.json({ items, total, page, limit });
 }

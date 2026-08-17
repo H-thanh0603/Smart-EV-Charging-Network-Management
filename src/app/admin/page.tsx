@@ -13,8 +13,7 @@ export default function AdminPage() {
   useEffect(() => {
     const user = localStorage.getItem("user");
     if (!user || JSON.parse(user).role !== "ADMIN") { router.push("/stations"); return; }
-    const token = localStorage.getItem("token");
-    fetch("/api/admin/stats", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/admin/stats")
       .then(r => r.json()).then(d => { setStats(d); setLoading(false); });
   }, []);
 

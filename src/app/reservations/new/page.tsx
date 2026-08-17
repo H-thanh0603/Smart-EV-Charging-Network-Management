@@ -33,12 +33,11 @@ function NewReservationForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true); setError("");
-    const token = localStorage.getItem("token");
 
     if (mode === "single") {
       const res = await fetch("/api/reservations", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slotId, startTime, endTime })
       });
       const d = await res.json();
@@ -48,7 +47,7 @@ function NewReservationForm() {
       if (days.length === 0) { setError("Chọn ít nhất 1 ngày"); setLoading(false); return; }
       const res = await fetch("/api/reservations/recurring", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slotId,
           daysOfWeek: days.join(","),

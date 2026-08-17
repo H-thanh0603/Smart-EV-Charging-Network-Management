@@ -1,33 +1,37 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import { Icon } from "@/components/ui/Icon";
 import { toast } from "@/components/ui/Toaster";
 
+const LIMIT = 20;
+
 export default function SessionsPage() {
   const router = useRouter();
   const [sessions, setSessions] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const pageRef = useRef(1);
 
-  async function load() {
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/sessions", { headers: { Authorization: `Bearer ${token}` } });
-    setSessions(await res.json()); setLoading(false);
+  async function load(p = 1, append = false) {
+    const res = await fetch(`/api/sessions?page=${p}&limit=${LIMIT}`);
+    const d = await res.json();
+    setSessions(prev => append ? [...prev, ...d.items] : d.items);
+    setTotal(d.total); pageRef.current = p; setLoading(false);
   }
 
   useEffect(() => {
-    load();
-    // Poll every 10s for active sessions
-    const t = setInterval(load, 10000);
+    load(1);
+    // Poll 10s cho phiên ACTIVE — chỉ refresh khi chưa "Tải thêm" (tránh reset danh sách)
+    const t = setInterval(() => { if (pageRef.current === 1) load(1); }, 10000);
     return () => clearInterval(t);
   }, []);
 
   async function stop(id: string) {
     if (!confirm("Dừng phiên sạc này?")) return;
-    const token = localStorage.getItem("token");
-    const res = await fetch(`/api/sessions/${id}/stop`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`/api/sessions/${id}/stop`, { method: "POST" });
     const d = await res.json();
     if (!res.ok) { toast(d.error, "error"); return; }
     toast(`Phiên sạc kết thúc! ${d.invoice.energyKwh} kWh • ${d.invoice.amount.toLocaleString("vi-VN")} ₫`, "success");
@@ -102,7 +106,7 @@ export default function SessionsPage() {
           <>
             {completed.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Lịch sử ({completed.length})</h3>
+                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Lịch sử ({completed.length}/{total})</h3>
                 <div className="space-y-3">
                   {completed.map(s => (
                     <div key={s.id} className="card p-5">
@@ -130,6 +134,9 @@ export default function SessionsPage() {
                   ))}
                 </div>
               </div>
+            )}
+            {sessions.length < total && (
+              <button onClick={() => load(pageRef.current + 1, true)} className="btn-secondary w-full mt-4">Tải thêm</button>
             )}
             {sessions.length === 0 && (
               <div className="card p-12 text-center">

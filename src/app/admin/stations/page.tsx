@@ -38,8 +38,7 @@ export default function AdminStationsPage() {
 
   async function load() {
     setLoading(true);
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/stations", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch("/api/stations");
     setStations(await res.json());
     setLoading(false);
   }
@@ -65,11 +64,10 @@ export default function AdminStationsPage() {
   }
 
   async function save() {
-    const token = localStorage.getItem("token");
     const body = { ...form, amenities: form.amenities.join(",") };
     const res = await fetch("/api/admin/stations", {
       method: editing ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
     if (res.ok) { setShowForm(false); load(); }
@@ -78,9 +76,8 @@ export default function AdminStationsPage() {
 
   async function remove(id: string, name: string) {
     if (!confirm(`Xoá trạm "${name}"? Dữ liệu liên quan sẽ mất.`)) return;
-    const token = localStorage.getItem("token");
     const res = await fetch(`/api/admin/stations?id=${encodeURIComponent(id)}`, {
-      method: "DELETE", headers: { Authorization: `Bearer ${token}` }
+      method: "DELETE"
     });
     if (res.ok) load();
     else alert("Không xoá được");

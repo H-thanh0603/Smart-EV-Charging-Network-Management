@@ -14,8 +14,7 @@ export default function SessionDetailPage() {
   const [tick, setTick] = useState(0);
 
   async function load() {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`/api/sessions/${params.id}`, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`/api/sessions/${params.id}`);
     if (!res.ok) {
       setError("Không tìm thấy phiên sạc");
       setLoading(false);
@@ -38,10 +37,8 @@ export default function SessionDetailPage() {
   async function stopCharging() {
     if (!confirm("Dừng phiên sạc và xuất hoá đơn?")) return;
     setStopping(true);
-    const token = localStorage.getItem("token");
     const res = await fetch(`/api/sessions/${params.id}/stop`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
     });
     setStopping(false);
     if (res.ok) {

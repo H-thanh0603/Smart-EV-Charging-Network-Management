@@ -19,8 +19,7 @@ export default function LoyaltyPage() {
   const [showRedeem, setShowRedeem] = useState(false);
 
   async function load() {
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/loyalty", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch("/api/loyalty");
     setData(await res.json());
     setLoading(false);
   }
@@ -28,10 +27,9 @@ export default function LoyaltyPage() {
   useEffect(() => { load(); }, []);
 
   async function redeem() {
-    const token = localStorage.getItem("token");
     const res = await fetch("/api/loyalty/redeem", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ points: redeemAmount })
     });
     const d = await res.json();

@@ -16,11 +16,10 @@ export default function AdminMaintenancePage() {
   const [page, setPage] = useState(1);
 
   async function load() {
-    const token = localStorage.getItem("token");
     const [t, s, u] = await Promise.all([
-      fetch("/api/maintenance", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch("/api/maintenance").then(r => r.json()),
       fetch("/api/stations").then(r => r.json()),
-      fetch("/api/admin/users", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => [])
+      fetch("/api/admin/users").then(r => r.json()).catch(() => [])
     ]);
     setTickets(t); setStations(s);
     setTechs(Array.isArray(u) ? u.filter((x: any) => x.role === "TECHNICIAN") : []);
@@ -34,20 +33,18 @@ export default function AdminMaintenancePage() {
   }, []);
 
   async function create() {
-    const token = localStorage.getItem("token");
     const res = await fetch("/api/maintenance", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)
     });
     if (res.ok) { setShowForm(false); setForm({ stationId: "", slotId: "", title: "", description: "", priority: "MEDIUM", assignedToId: "" }); load(); }
   }
 
   async function updateStatus(id: string, status: string) {
-    const token = localStorage.getItem("token");
     await fetch(`/api/maintenance/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status })
     });
     load();

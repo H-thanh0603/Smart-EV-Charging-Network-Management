@@ -11,18 +11,16 @@ export default function AdminApiKeysPage() {
 
   async function load() {
     setLoading(true);
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/apikeys", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch("/api/apikeys");
     if (res.ok) setKeys(await res.json());
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
 
   async function create() {
-    const token = localStorage.getItem("token");
     const res = await fetch("/api/apikeys", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
     if (res.ok) {
@@ -34,10 +32,9 @@ export default function AdminApiKeysPage() {
   }
 
   async function toggleActive(id: string, active: boolean) {
-    const token = localStorage.getItem("token");
     await fetch(`/api/apikeys/${id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ active: !active }),
     });
     load();
@@ -45,8 +42,7 @@ export default function AdminApiKeysPage() {
 
   async function remove(id: string, name: string) {
     if (!confirm(`Xoá API key "${name}"?`)) return;
-    const token = localStorage.getItem("token");
-    await fetch(`/api/apikeys/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    await fetch(`/api/apikeys/${id}`, { method: "DELETE" });
     load();
   }
 

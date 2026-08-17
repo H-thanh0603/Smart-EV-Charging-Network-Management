@@ -30,8 +30,7 @@ export default function AdminFleetsPage() {
 
   async function load() {
     setLoading(true);
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/admin/fleets", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch("/api/admin/fleets");
     if (res.ok) setFleets(await res.json());
     setLoading(false);
   }
@@ -58,12 +57,11 @@ export default function AdminFleetsPage() {
 
   async function submit() {
     setError("");
-    const token = localStorage.getItem("token");
     const url = editing ? `/api/admin/fleets/${editing.id}` : "/api/admin/fleets";
     const method = editing ? "PATCH" : "POST";
     const res = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
     if (!res.ok) {
@@ -77,10 +75,8 @@ export default function AdminFleetsPage() {
 
   async function remove(id: string, name: string) {
     if (!confirm(`Xoá fleet "${name}"? Tài xế và xe sẽ bị tách khỏi fleet.`)) return;
-    const token = localStorage.getItem("token");
     const res = await fetch(`/api/admin/fleets/${id}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) load();
   }

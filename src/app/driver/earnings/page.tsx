@@ -7,8 +7,7 @@ export default function DriverEarningsPage() {
   const [period, setPeriod] = useState<"week" | "month">("week");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("/api/sessions", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/sessions")
       .then(r => r.json())
       .then(d => {
         const completed = Array.isArray(d) ? d.filter((s: any) => s.status === "COMPLETED") : [];

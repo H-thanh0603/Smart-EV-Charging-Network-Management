@@ -20,8 +20,7 @@ export default function TechnicianShell({ children, title, user }: { children: R
   const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("/api/maintenance", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/maintenance")
       .then(r => r.json()).then(d => {
         if (Array.isArray(d)) setOpenTickets(d.filter((t: any) => t.assignedToId === user?.id && (t.status === "OPEN" || t.status === "IN_PROGRESS")).length);
       }).catch(() => {});
@@ -29,7 +28,7 @@ export default function TechnicianShell({ children, title, user }: { children: R
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {});
-    localStorage.removeItem("token"); localStorage.removeItem("user");
+    localStorage.removeItem("user");
     router.push("/login");
   }
 

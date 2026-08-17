@@ -32,14 +32,13 @@ export default function AdminShell({ children, title, user }: { children: React.
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("/api/admin/stats", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/admin/stats")
       .then(r => r.json()).then(setStats).catch(() => {});
   }, []);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {});
-    localStorage.removeItem("token"); localStorage.removeItem("user");
+    localStorage.removeItem("user");
     router.push("/login");
   }
 

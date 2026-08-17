@@ -22,7 +22,6 @@ export default function LoginPage() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) { setError(data.error); return; }
-    localStorage.setItem("token", data.token);
     localStorage.setItem("user", JSON.stringify(data.user));
     if (data.user.role === "ADMIN") router.push("/admin");
     else if (data.user.role === "TECHNICIAN") router.push("/technician");

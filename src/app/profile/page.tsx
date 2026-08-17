@@ -11,8 +11,7 @@ export default function ProfilePage() {
   const [message, setMessage] = useState<{ type: string; text: string } | null>(null);
 
   async function load() {
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch("/api/auth/me");
     const u = await res.json();
     setUser(u);
     setForm({ name: u.name || "", phone: u.phone || "" });
@@ -23,10 +22,9 @@ export default function ProfilePage() {
 
   async function saveProfile() {
     setMessage(null);
-    const token = localStorage.getItem("token");
     const res = await fetch("/api/auth/me", {
       method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)
     });
     if (res.ok) {
@@ -43,10 +41,9 @@ export default function ProfilePage() {
       setMessage({ type: "error", text: "Mật khẩu xác nhận không khớp" });
       return;
     }
-    const token = localStorage.getItem("token");
     const res = await fetch("/api/auth/change-password", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ oldPassword: pwForm.oldPassword, newPassword: pwForm.newPassword })
     });
     const d = await res.json();

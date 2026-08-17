@@ -28,8 +28,7 @@ function WalletContent() {
   const [processing, setProcessing] = useState(false);
 
   async function load() {
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/wallet", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch("/api/wallet");
     const d = await res.json();
     setWallet(d.wallet); setTransactions(d.transactions); setLoading(false);
   }
@@ -51,10 +50,9 @@ function WalletContent() {
       return;
     }
     setProcessing(true);
-    const token = localStorage.getItem("token");
     const res = await fetch("/api/wallet/topup", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ amount: Math.round(parseFloat(amount)), bankCode: bank })
     });
     const d = await res.json();

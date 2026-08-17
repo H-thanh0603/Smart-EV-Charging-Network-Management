@@ -8,8 +8,7 @@ export default function AdminLoyaltyPage() {
 
   async function load() {
     setLoading(true);
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/admin/loyalty", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch("/api/admin/loyalty");
     if (res.ok) setData(await res.json());
     setLoading(false);
   }

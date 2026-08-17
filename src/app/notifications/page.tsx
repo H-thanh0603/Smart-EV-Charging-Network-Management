@@ -1,21 +1,27 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
 
+const LIMIT = 20;
+
 export default function NotificationsPage() {
   const [list, setList] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const pageRef = useRef(1);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("/api/notifications", { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.json()).then(d => { setList(d); setLoading(false); });
-  }, []);
+  async function load(p = 1, append = false) {
+    const res = await fetch(`/api/notifications?page=${p}&limit=${LIMIT}`);
+    const d = await res.json();
+    setList(prev => append ? [...prev, ...d.items] : d.items);
+    setTotal(d.total); pageRef.current = p; setLoading(false);
+  }
+
+  useEffect(() => { load(); }, []);
 
   async function markRead(id: string) {
-    const token = localStorage.getItem("token");
-    await fetch(`/api/notifications/${id}/read`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+    await fetch(`/api/notifications/${id}/read`, { method: "POST" });
     setList(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   }
 
@@ -56,6 +62,9 @@ export default function NotificationsPage() {
                 </div>
               </div>
             ))}
+            {list.length < total && (
+              <button onClick={() => load(pageRef.current + 1, true)} className="btn-secondary w-full">Tải thêm</button>
+            )}
           </div>
         )}
       </div>

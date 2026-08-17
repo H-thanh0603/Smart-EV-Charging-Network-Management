@@ -11,8 +11,7 @@ export default function AdminRevenuePage() {
 
   async function load(p: string) {
     setLoading(true);
-    const token = localStorage.getItem("token");
-    const res = await fetch(`/api/admin/revenue?period=${p}`, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`/api/admin/revenue?period=${p}`);
     const d = await res.json();
     setData(d.data); setStats({ totalRevenue: d.totalRevenue, totalEnergy: d.totalEnergy, totalSessions: d.totalSessions });
     setLoading(false);
