@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
+import { audit } from "@/lib/audit";
+import { getClientIp } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   const user = await requireRole(req, ["ADMIN"]);
@@ -38,6 +40,7 @@ export async function POST(req: NextRequest) {
         active: active ?? true,
       },
     });
+    await audit({ actorId: user.id, role: user.role, action: "CREATE", entity: "Fleet", entityId: fleet.id, detail: fleet.code, ip: getClientIp(req) });
     return NextResponse.json(fleet);
   } catch (e: any) {
     if (e.code === "P2002") return NextResponse.json({ error: "Mã fleet đã tồn tại" }, { status: 409 });

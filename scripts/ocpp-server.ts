@@ -15,8 +15,13 @@
  * Chạy:  npm run ocpp:server
  */
 import { WebSocketServer, WebSocket } from "ws";
+import { existsSync } from "fs";
 import { prisma } from "../src/lib/prisma";
+import { logger } from "../src/lib/logger";
 import { finalizeSession } from "../src/lib/session";
+
+// tsx không tự load .env
+if (existsSync(".env")) process.loadEnvFile(".env");
 
 const PORT = Number(process.env.OCPP_PORT || 9220);
 const SECRET = process.env.OCPP_SECRET;
@@ -26,7 +31,7 @@ if (!SECRET) throw new Error("OCPP_SECRET chưa cấu hình trong .env (shared s
 type OcppCall = [2, string, string, any];
 
 function log(cpId: string, ...args: any[]) {
-  console.log(`[${new Date().toISOString()}] [CP:${cpId}]`, ...args);
+  logger.info({ cp: cpId, msg: args.map(String).join(" ") });
 }
 
 // Map trạng thái OCPP StatusNotification -> Slot.status của app
@@ -146,11 +151,12 @@ async function handleCall(ws: WebSocket, state: ConnState, action: string, paylo
         sendResult(ws, uniqueId, { transactionId: 0, idTagInfo: { status: "Invalid" } });
         break;
       }
+      const transactionId = ++txCounter;
+      // B3: persist transactionId + meterStart vào DB — sống sót sau restart, không chỉ in-memory
       const session = await prisma.chargingSession.create({
-        data: { userId: user.id, slotId, status: "ACTIVE", startTime: new Date() },
+        data: { userId: user.id, slotId, status: "ACTIVE", startTime: new Date(), transactionId: String(transactionId), meterStart },
       });
       await prisma.slot.update({ where: { id: slotId }, data: { status: "CHARGING" } });
-      const transactionId = ++txCounter;
       transactions.set(transactionId, { sessionId: session.id, slotId, meterStart });
       log(cpId, `StartTransaction connector=${connectorId} user=${user.email} txn=${transactionId}`);
       sendResult(ws, uniqueId, { transactionId, idTagInfo: { status: "Accepted" } });
@@ -251,6 +257,6 @@ async function main() {
 }
 
 main().catch((e) => {
-  console.error("OCPP server fatal:", e);
+  logger.error(e, "OCPP server fatal");
   process.exit(1);
 });

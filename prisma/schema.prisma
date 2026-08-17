@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model User {
@@ -137,6 +137,9 @@ model ChargingSession {
   endTime       DateTime?
   energyKwh     Float?
   status        String    @default("ACTIVE")
+  // OCPP: id giao dịch bên charge point + chỉ số công tơ đầu — persist để sống sót sau restart
+  transactionId String?
+  meterStart    Float?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -154,10 +157,10 @@ model Invoice {
   sessionId String    @unique
   userId    String
   energyKwh Float
-  subtotal  Float?
-  discount  Float     @default(0)
+  subtotal  Int?
+  discount  Int       @default(0)
   voucherCode String?
-  amount    Float
+  amount    Int
   pointsEarned Int    @default(0)
   pointsRedeemed Int  @default(0)
   status    String    @default("UNPAID")
@@ -175,7 +178,7 @@ model Invoice {
 model Wallet {
   id        String   @id @default(cuid())
   userId    String   @unique
-  balance   Float    @default(0)
+  balance   Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -186,8 +189,8 @@ model WalletTransaction {
   id        String   @id @default(cuid())
   userId    String
   type      String
-  amount    Float
-  balance   Float
+  amount    Int
+  balance   Int
   note      String?
   paymentId String?
   createdAt DateTime @default(now())
@@ -201,7 +204,7 @@ model Payment {
   id            String   @id @default(cuid())
   userId        String
   txnRef        String   @unique
-  amount        Float
+  amount        Int
   status        String   @default("PENDING")
   provider      String
   responseCode  String?
@@ -296,9 +299,9 @@ model Voucher {
   name        String
   description String?
   type        String   // PERCENT or FIXED
-  value       Float    // % (1-100) or VND amount
-  minAmount   Float    @default(0)
-  maxDiscount Float?
+  value       Int      // % (1-100) or VND amount
+  minAmount   Int      @default(0)
+  maxDiscount Int?
   usageLimit  Int?     // total times can be used (null = unlimited)
   perUserLimit Int     @default(1)
   validFrom   DateTime @default(now())
@@ -316,7 +319,7 @@ model VoucherUsage {
   voucherId String
   userId    String
   invoiceId String?
-  discount  Float
+  discount  Int
   createdAt DateTime @default(now())
 
   voucher Voucher @relation(fields: [voucherId], references: [id])
@@ -357,6 +360,20 @@ model WebhookLog {
   responseBody String?
   success     Boolean  @default(false)
   createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  role      String?
+  action    String
+  entity    String
+  entityId  String?
+  detail    String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([actorId, createdAt])
 }
 
 model ApiKey {

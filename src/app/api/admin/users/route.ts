@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken, getTokenFromRequest } from "@/lib/auth";
+import { audit } from "@/lib/audit";
+import { getClientIp } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 
 async function checkAdmin(req: NextRequest) {
@@ -36,6 +38,7 @@ export async function POST(req: NextRequest) {
   const user = await prisma.user.create({
     data: { email, password: hash, name, phone: phone || null, role: role || "CUSTOMER", fleetId: fleetId || null }
   });
+  await audit({ actorId: u.id, role: u.role, action: "CREATE", entity: "User", entityId: user.id, detail: email, ip: getClientIp(req) });
   return NextResponse.json({ id: user.id, email: user.email, name: user.name, role: user.role });
 }
 
@@ -54,6 +57,7 @@ export async function PUT(req: NextRequest) {
   if (password) data.password = await bcrypt.hash(password, 10);
 
   const user = await prisma.user.update({ where: { id }, data });
+  await audit({ actorId: u.id, role: u.role, action: "UPDATE", entity: "User", entityId: id, detail: `${user.email} role=${role ?? "giữ nguyên"}`, ip: getClientIp(req) });
   return NextResponse.json({ id: user.id, email: user.email, name: user.name, role: user.role });
 }
 
@@ -67,5 +71,6 @@ export async function DELETE(req: NextRequest) {
   if (id === u.id) return NextResponse.json({ error: "Không thể xoá chính mình" }, { status: 400 });
 
   await prisma.user.update({ where: { id }, data: { deletedAt: new Date() } });
+  await audit({ actorId: u.id, role: u.role, action: "DELETE", entity: "User", entityId: id, detail: "soft delete", ip: getClientIp(req) });
   return NextResponse.json({ ok: true });
 }

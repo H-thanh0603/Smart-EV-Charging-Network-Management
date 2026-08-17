@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { redis } from "./redis";
 
 export type LiveStation = {
   id: string;
@@ -32,6 +33,25 @@ export type LiveStation = {
  * phiên đang sạc + ETA. Dùng chung cho route polling và SSE stream.
  */
 export async function getLiveStations(): Promise<LiveStation[]> {
+  // Redis cache 2s — đủ realtime cho SSE (poll 3s), giảm DB hit khi nhiều instance.
+  // Fail-open: Redis chết thì vẫn query DB.
+  try {
+    const cached = await redis.get("live:stations");
+    if (cached) return JSON.parse(cached);
+  } catch {
+    /* bỏ qua */
+  }
+
+  const result = await computeLiveStations();
+  try {
+    await redis.set("live:stations", JSON.stringify(result), "EX", 2);
+  } catch {
+    /* bỏ qua */
+  }
+  return result;
+}
+
+async function computeLiveStations(): Promise<LiveStation[]> {
   const stations = await prisma.station.findMany({
     include: {
       slots: {

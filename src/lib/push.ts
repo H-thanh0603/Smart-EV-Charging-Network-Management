@@ -1,6 +1,8 @@
 // Web Push helper using web-push library
 // VAPID keys generated once via: npx web-push generate-vapid-keys
 // Private key KHÔNG có fallback hardcode — đọc từ .env ngay lúc gửi.
+import { logger } from "./logger";
+
 export const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC || "";
 export const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:admin@evcharge.com";
 
@@ -16,7 +18,7 @@ export async function sendPush(subscription: any, payload: any) {
     );
     return true;
   } catch (e: any) {
-    console.error("Push failed:", e?.message);
+    logger.error({ err: e?.message }, "push send failed");
     return false;
   }
 }

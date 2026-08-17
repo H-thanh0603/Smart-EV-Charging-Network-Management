@@ -56,7 +56,7 @@ test("hết hạn: invalid", async () => {
   });
   const r = await validateAndCalculate("EXP", "u1", 50000);
   assert.equal(r.valid, false);
-  assert.match(r.error, /hết hạn/i);
+  assert.match(r.error!, /hết hạn/i);
 });
 
 test("perUserLimit: dùng quá limit bị từ chối", async () => {
@@ -73,7 +73,7 @@ test("perUserLimit: dùng quá limit bị từ chối", async () => {
   });
   const r = await validateAndCalculate("LIMIT1", user.id, 50000);
   assert.equal(r.valid, false);
-  assert.match(r.error, /giới hạn/);
+  assert.match(r.error!, /giới hạn/);
 });
 
 test("không đủ minAmount: invalid", async () => {
@@ -86,5 +86,5 @@ test("không đủ minAmount: invalid", async () => {
   });
   const r = await validateAndCalculate("MIN100", "u1", 50000);
   assert.equal(r.valid, false);
-  assert.match(r.error, /tối thiểu/);
+  assert.match(r.error!, /tối thiểu/);
 });

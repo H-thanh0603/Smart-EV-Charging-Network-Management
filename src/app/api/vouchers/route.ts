@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken, getTokenFromRequest } from "@/lib/auth";
+import { audit } from "@/lib/audit";
+import { getClientIp } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   const token = getTokenFromRequest(req);
@@ -42,5 +44,6 @@ export async function POST(req: NextRequest) {
       active: body.active !== false,
     }
   });
+  await audit({ actorId: u.id, role: u.role, action: "CREATE", entity: "Voucher", entityId: v.id, detail: v.code, ip: getClientIp(req) });
   return NextResponse.json(v);
 }

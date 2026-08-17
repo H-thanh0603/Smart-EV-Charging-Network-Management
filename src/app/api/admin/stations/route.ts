@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken, getTokenFromRequest } from "@/lib/auth";
+import { audit } from "@/lib/audit";
+import { getClientIp } from "@/lib/rate-limit";
 
 async function checkAdmin(req: NextRequest) {
   const token = getTokenFromRequest(req);
@@ -42,6 +44,7 @@ export async function POST(req: NextRequest) {
       thumbnailUrl: thumbnailUrl || imageUrl || null,
     }
   });
+  await audit({ actorId: u.id, role: u.role, action: "CREATE", entity: "Station", entityId: station.id, detail: `${name} @ ${city}`, ip: getClientIp(req) });
   return NextResponse.json(station);
 }
 
@@ -68,6 +71,7 @@ export async function PUT(req: NextRequest) {
       thumbnailUrl: thumbnailUrl || imageUrl || null,
     }
   });
+  await audit({ actorId: u.id, role: u.role, action: "UPDATE", entity: "Station", entityId: id, detail: name, ip: getClientIp(req) });
   return NextResponse.json(station);
 }
 
@@ -82,5 +86,6 @@ export async function DELETE(req: NextRequest) {
   // Delete slots first (foreign key)
   await prisma.slot.deleteMany({ where: { stationId: id } });
   await prisma.station.delete({ where: { id } });
+  await audit({ actorId: u.id, role: u.role, action: "DELETE", entity: "Station", entityId: id, ip: getClientIp(req) });
   return NextResponse.json({ ok: true });
 }

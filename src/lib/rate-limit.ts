@@ -1,22 +1,10 @@
 import { NextResponse } from "next/server";
+import { redis } from "./redis";
 
 /**
- * Rate limiter in-memory (fixed window) — đủ cho đồ án demo chạy 1 instance.
- * Chống brute-force login/register. Production nhiều instance nên thay bằng Redis.
+ * Rate limiter fixed window trên Redis — chạy đúng nhiều instance.
+ * Atomic INCR + EXPIRE. Nếu Redis chết, fail-open (không chặn nhầm).
  */
-type Bucket = { count: number; resetAt: number };
-const store = new Map<string, Bucket>();
-
-// Dọn định kỳ các bucket hết hạn để tránh rò rỉ bộ nhớ.
-let lastSweep = Date.now();
-function sweep(now: number) {
-  if (now - lastSweep < 60_000) return;
-  lastSweep = now;
-  store.forEach((bucket, key) => {
-    if (bucket.resetAt <= now) store.delete(key);
-  });
-}
-
 /** Lấy IP client từ header proxy phổ biến, fallback "unknown". */
 export function getClientIp(req: Request): string {
   const xff = req.headers.get("x-forwarded-for");
@@ -30,24 +18,24 @@ export function getClientIp(req: Request): string {
  * @param limit số request tối đa trong cửa sổ
  * @param windowMs độ dài cửa sổ (ms)
  */
-export function checkRateLimit(key: string, limit: number, windowMs: number): NextResponse | null {
-  const now = Date.now();
-  sweep(now);
+export async function checkRateLimit(
+  key: string,
+  limit: number,
+  windowMs: number
+): Promise<NextResponse | null> {
+  try {
+    const count = await redis.incr(key);
+    if (count === 1) await redis.expire(key, Math.floor(windowMs / 1000));
 
-  const bucket = store.get(key);
-  if (!bucket || bucket.resetAt <= now) {
-    store.set(key, { count: 1, resetAt: now + windowMs });
+    if (count > limit) {
+      const ttl = await redis.ttl(key);
+      return NextResponse.json(
+        { error: `Quá nhiều yêu cầu. Vui lòng thử lại sau ${ttl}s.` },
+        { status: 429, headers: { "Retry-After": String(Math.max(ttl, 0)) } }
+      );
+    }
     return null;
+  } catch {
+    return null; // fail-open khi Redis down
   }
-
-  if (bucket.count >= limit) {
-    const retryAfter = Math.ceil((bucket.resetAt - now) / 1000);
-    return NextResponse.json(
-      { error: `Quá nhiều yêu cầu. Vui lòng thử lại sau ${retryAfter}s.` },
-      { status: 429, headers: { "Retry-After": String(retryAfter) } }
-    );
-  }
-
-  bucket.count += 1;
-  return null;
 }

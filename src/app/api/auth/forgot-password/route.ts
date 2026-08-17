@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
   // Tránh lộ token cho attacker: chỉ trả link trong dev. Production phải gửi email/SMS.
   const resetUrl = `${req.nextUrl.origin}/reset-password?token=${token}`;
   if (process.env.NODE_ENV !== "production") {
-    console.log(`[Reset] Link for ${email}: ${resetUrl}`);
+    logger.info({ email, resetUrl }, "[Reset] password reset link generated");
     return NextResponse.json({
       success: true,
       message: "Link đặt lại đã được gửi tới email (demo: hiện ngay tại đây).",
