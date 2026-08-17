@@ -15,7 +15,7 @@
  * Chạy:  npm run ocpp:server
  */
 import { WebSocketServer, WebSocket } from "ws";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { prisma } from "../src/lib/prisma";
 import { logger } from "../src/lib/logger";
 import { finalizeSession } from "../src/lib/session";
@@ -25,6 +25,26 @@ if (existsSync(".env")) process.loadEnvFile(".env");
 
 const PORT = Number(process.env.OCPP_PORT || 9220);
 const SECRET = process.env.OCPP_SECRET;
+
+// TLS/mTLS — có OCPP_TLS_SERVER_CERT+KEY là chạy wss://; thêm OCPP_TLS_CLIENT_CA thì bắt buộc client cert
+function tlsOptions(): { tlsOpts: { cert: Buffer; key: Buffer; ca?: Buffer; requestCert: boolean }; requireClientCert: boolean } | { tlsOpts: undefined; requireClientCert: false } {
+  const cert = process.env.OCPP_TLS_SERVER_CERT;
+  const key = process.env.OCPP_TLS_SERVER_KEY;
+  const ca = process.env.OCPP_TLS_CLIENT_CA;
+  if (!cert || !key) return { tlsOpts: undefined, requireClientCert: false };
+  if (!existsSync(cert) || !existsSync(key) || (ca && !existsSync(ca))) {
+    throw new Error("OCPP_TLS_* path không tồn tại");
+  }
+  return {
+    tlsOpts: {
+      cert: readFileSync(cert),
+      key: readFileSync(key),
+      ca: ca ? readFileSync(ca) : undefined,
+      requestCert: !!ca,
+    },
+    requireClientCert: !!ca,
+  };
+}
 if (!SECRET) throw new Error("OCPP_SECRET chưa cấu hình trong .env (shared secret giữa CSMS và charge point).");
 
 // CALL = 2, CALLRESULT = 3, CALLERROR = 4
@@ -209,10 +229,28 @@ async function findUserByIdTag(idTag: string) {
 }
 
 async function main() {
-  const wss = new WebSocketServer({ port: PORT });
-  console.log(`⚡ OCPP 1.6-J Central System đang lắng nghe ws://localhost:${PORT}/ocpp/{stationId}`);
+  const { tlsOpts, requireClientCert } = tlsOptions();
+  let wss: WebSocketServer;
+  if (tlsOpts) {
+    const https = await import("node:https");
+    const server = https.createServer(tlsOpts);
+    server.listen(PORT);
+    wss = new WebSocketServer({ server });
+  } else {
+    wss = new WebSocketServer({ port: PORT });
+  }
+  console.log(`⚡ OCPP 1.6-J Central System đang lắng nghe ${tlsOpts ? "wss" : "ws"}://${requireClientCert ? "mTLS " : ""}localhost:${PORT}/ocpp/{stationId}`);
 
   wss.on("connection", async (ws, req) => {
+    // mTLS: reject nếu client không gửi cert hợp lệ
+    const sock = req.socket as any;
+    if (requireClientCert) {
+      const peer = sock && sock.getPeerCertificate ? sock.getPeerCertificate() : {};
+      if (!peer || !peer.subject) {
+        ws.close(1008, "Missing client certificate (mTLS required)");
+        return;
+      }
+    }
     // Authenticate charge point bằng shared secret (header x-ocpp-secret).
     if (req.headers["x-ocpp-secret"] !== SECRET) {
       ws.close(1008, "Missing/invalid OCPP_SECRET");
