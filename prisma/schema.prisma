@@ -20,6 +20,7 @@ model User {
   resetToken    String?
   resetTokenExp DateTime?
   theme         String  @default("light")
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -106,6 +107,8 @@ model Reservation {
   slot      Slot    @relation(fields: [slotId], references: [id])
   session   ChargingSession?
   recurring RecurringReservation? @relation(fields: [recurringId], references: [id])
+
+  @@index([slotId, status, startTime])
 }
 
 model RecurringReservation {
@@ -141,6 +144,8 @@ model ChargingSession {
   slot        Slot         @relation(fields: [slotId], references: [id])
   reservation Reservation? @relation(fields: [reservationId], references: [id])
   invoice     Invoice?
+
+  @@index([status])
 }
 
 model Invoice {
@@ -163,6 +168,8 @@ model Invoice {
 
   session ChargingSession @relation(fields: [sessionId], references: [id])
   user    User            @relation(fields: [userId], references: [id])
+
+  @@index([userId, status])
 }
 
 model Wallet {
@@ -186,6 +193,8 @@ model WalletTransaction {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model Payment {
@@ -249,6 +258,8 @@ model Notification {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
 }
 
 model Review {

@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     if (!parsed.ok) return parsed.response;
     const { email, password } = parsed.data;
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return NextResponse.json({ error: "Sai email hoặc mật khẩu" }, { status: 401 });
+    if (!user || user.deletedAt) return NextResponse.json({ error: "Sai email hoặc mật khẩu" }, { status: 401 });
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return NextResponse.json({ error: "Sai email hoặc mật khẩu" }, { status: 401 });
     const token = signToken({ id: user.id, email: user.email, role: user.role });

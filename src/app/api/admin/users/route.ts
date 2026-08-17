@@ -10,6 +10,18 @@ async function checkAdmin(req: NextRequest) {
   return u;
 }
 
+export async function GET(req: NextRequest) {
+  const u = await checkAdmin(req);
+  if (!u) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const users = await prisma.user.findMany({
+    where: { deletedAt: null },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, email: true, name: true, phone: true, role: true, fleetId: true, createdAt: true },
+  });
+  return NextResponse.json(users);
+}
+
 export async function POST(req: NextRequest) {
   const u = await checkAdmin(req);
   if (!u) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -18,7 +30,7 @@ export async function POST(req: NextRequest) {
   if (!email || !password || !name) return NextResponse.json({ error: "Thiếu thông tin" }, { status: 400 });
 
   const exists = await prisma.user.findUnique({ where: { email } });
-  if (exists) return NextResponse.json({ error: "Email đã tồn tại" }, { status: 400 });
+  if (exists && !exists.deletedAt) return NextResponse.json({ error: "Email đã tồn tại" }, { status: 400 });
 
   const hash = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({
@@ -54,6 +66,6 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ error: "Thiếu id" }, { status: 400 });
   if (id === u.id) return NextResponse.json({ error: "Không thể xoá chính mình" }, { status: 400 });
 
-  await prisma.user.delete({ where: { id } });
+  await prisma.user.update({ where: { id }, data: { deletedAt: new Date() } });
   return NextResponse.json({ ok: true });
 }

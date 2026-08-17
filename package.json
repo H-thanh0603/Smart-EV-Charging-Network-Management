@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "DATABASE_URL=\"file:./tests/test.db\" tsx --test --test-concurrency=1 tests/*.test.ts",
+    "pretest": "DATABASE_URL=\"file:./tests/test.db\" prisma db push",
     "cron:expire": "tsx scripts/cron-expire.ts",
     "ocpp:server": "tsx scripts/ocpp-server.ts",
     "ocpp:sim": "tsx scripts/ocpp-simulator.ts"

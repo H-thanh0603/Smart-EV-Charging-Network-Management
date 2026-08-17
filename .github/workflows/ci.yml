@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Create build DB
+        run: npx prisma db push
+        env:
+          DATABASE_URL: "file:./prisma/ci.db"
+
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: "file:./prisma/ci.db"
+
+      - name: Test
+        run: npm test
+        env:
+          VNPAY_TMN_CODE: "CI_TEST_CODE"
+          VNPAY_HASH_SECRET: "ci_test_secret_for_tests_only"
